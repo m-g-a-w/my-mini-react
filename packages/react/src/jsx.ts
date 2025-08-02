@@ -40,4 +40,23 @@ export const jsx = (type: ElementType,config: any,...maybeChildren: any): ReactE
     }   
     return ReactElement(type,key,ref,props);
 }   
-export const jsxDev = jsx;
+export const jsxDEV = (type: ElementType,config: any): ReactElement => {
+    let key:Key = null;
+    const props: Props = {};
+    let ref: Ref = null;
+    for(const prop in config){
+        const val = config[prop];
+        if(prop === 'key'){
+            if(val !== undefined)key = '' + val
+            continue;    
+        } 
+        if(prop === 'ref'){
+            if(val !== undefined)ref = '' + val;
+            continue;
+        }
+        if({}.hasOwnProperty.call(config,prop)){//自己身上的而非原型上的
+            props[prop] = val;
+        }
+    }
+    return ReactElement(type,key,ref,props);
+}   
