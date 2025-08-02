@@ -27,3 +27,4 @@ npm run build:dev 进行打包
 两者最终效果完全一致，JSX 会被 Babel 等工具自动转换为上面的 createElement 调用。
 
 第一种调试方式（临时方案）通过pnpm link --global进行链接 可以模拟实际项目引用React的情况 但是过程略显繁琐
+2.diff算法（reconciler 协调器）
