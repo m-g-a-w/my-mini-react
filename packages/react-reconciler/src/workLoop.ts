@@ -42,6 +42,9 @@ function renderRoot(root: FiberRootNode) {
             workInProgress = null; // 重置当前工作中的Fiber节点
         }
     }while(true);
+    const finishedWork = root.current.alternate
+    root.finishedWork = finishedWork; // 设置完成的工作节点
+    commitRoot(root); // 提交根节点
 }
 function workLoop() {
     while(workInProgress !== null) {

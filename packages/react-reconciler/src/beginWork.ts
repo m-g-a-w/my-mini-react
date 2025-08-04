@@ -19,6 +19,7 @@ export const beginWork = (wip: FiberNode) => {
             }
             break;
     }
+    return null
 }
 function updateHostRoot(wip: FiberNode) {
     const baseState = wip.memoizedProps; // 获取基础状态

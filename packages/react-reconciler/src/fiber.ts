@@ -20,6 +20,7 @@ export class FiberNode {
     memoiszedState: any; // 已处理的状态
     alternate: FiberNode | null; // 用于在workinProgess与current两棵缓存树中进行切换
     flags: Flags; // 用于标记Fiber的状态，如更新、删除等
+    subtreeFlags: Flags; // 子树的标记，用于标记子节点的状态
     updateQueue: any; // 更新队列，用于存储待处理的更新
 
     constructor(tag: WorkTag,pengingProps: Props,key: Key){
@@ -43,6 +44,8 @@ export class FiberNode {
         this.alternate = null; // 用于在workinProgess与current两棵缓存树中进行切换
         //副作用
         this.flags = NoFlags; //用于标记Fiber的状态，如更新、删除等
+        this.subtreeFlags = NoFlags; // 子树的标记，用于标记子节点的状态
+        
     }
 }
 export class FiberRootNode{
