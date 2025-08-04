@@ -14,14 +14,14 @@ export const createUpdate = <State>(action: Action<State>): Update<State> => {
         action,
     };
 }
-export const createUpdateQueue = <Action>() => {
+export const createUpdateQueue = <State>() => {
     return {
         shared: {
             pending: null, // 初始化时没有待处理的更新
         },
-    } as UpdateQueue<Action>;
+    } as UpdateQueue<State>;
 }
-export const enqueueUpdate = <Action>(updateQueue: UpdateQueue<Action>, update: Update<Action>) => {
+export const enqueueUpdate = <State>(updateQueue: UpdateQueue<State>, update: Update<State>) => {
     updateQueue.shared.pending = update; // 将更新添加到待处理队列中
 }
 export const processUpdateQueue = <State>(baseState: State, pendingUpdate: Update<State> | null):{memoizedState:State} => {

@@ -1,13 +1,34 @@
 import { completeWork } from './completeWork';
-import { FiberNode } from './fiber';
+import { createWorkInProgress, FiberNode } from './fiber';
 import { beginWork } from './beginWork';
+import { FiberRootNode } from './fiber';
+import { HostRoot } from './workTags';
 
 let workInProgress: FiberNode | null = null;
 
-function prepareRefreshStack(fiber: FiberNode) {
-    workInProgress = fiber; // 设置当前工作中的Fiber节点
+function prepareRefreshStack(root: FiberRootNode) {
+    workInProgress = createWorkInProgress(root.current,{}); // 设置当前工作中的Fiber节点
+
 }
-function renderRoot(root: FiberNode) {
+export function scheduleUpdateOnFiber(fiber: FiberNode){
+    //调度功能
+    const root = markUpdateFromFiberToRoot(fiber); // 标记从Fiber节点到根节点的更新
+    renderRoot(root); // 渲染根节点
+}
+function markUpdateFromFiberToRoot(fiber: FiberNode) {
+    let node = fiber;
+    let parent = fiber.return; // 获取父节点
+    while(parent !== null) {
+        node = parent; // 向上回溯到根节点
+        parent = parent.return; // 获取父节点
+    }
+    if(node.tag === HostRoot) { // 如果根节点是HostRoot类型
+        return node.stateNode; // 返回根节点的状态节点
+    }
+    return null; // 如果没有找到根节点，返回null
+}
+
+function renderRoot(root: FiberRootNode) {
     prepareRefreshStack(root)
     do{
         try{

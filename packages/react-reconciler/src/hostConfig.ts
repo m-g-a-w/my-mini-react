@@ -1,0 +1,1 @@
+export type Container = any; // 容器类型，可以是DOM元素或其他容器
