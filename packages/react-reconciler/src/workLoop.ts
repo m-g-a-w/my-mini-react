@@ -35,8 +35,10 @@ function renderRoot(root: FiberRootNode) {
             workLoop();
             break; // 如果工作循环完成，跳出循环
         }catch(error) {
-            console.error('Error during work loop:', error);
             // 处理错误逻辑，例如记录错误或重置工作状态
+            if(__DEV__) {
+                console.error('workLoop发生错误:', error);
+            }
             workInProgress = null; // 重置当前工作中的Fiber节点
         }
     }while(true);

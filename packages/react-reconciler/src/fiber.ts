@@ -1,8 +1,7 @@
-import {Props,Key,Ref} from 'shared/ReactTypes'
-import {WorkTag} from './workTags'
+import {Props,Key,Ref, ReactElement} from 'shared/ReactTypes'
+import {FunctionComponent, WorkTag,HostComponent} from './workTags'
 import {Flags,NoFlags} from './fiberFlags'
 import {Container} from 'hostConfig'
-
 
 export class FiberNode {
     tag: WorkTag; // Fiber的类型
@@ -77,4 +76,16 @@ export const createWorkInProgress = (current: FiberNode, pendingProps: Props): F
     wip.memoizedProps = current.memoizedProps; // 继承当前节点的已处理属性
     wip.memoiszedState = current.memoiszedState; // 继承当前
     return wip; // 返回备用节点
+}
+export const createFiberFromElement = (element: ReactElement): FiberNode => {
+    const { type, key, props } = element; // 解构React元素的类型、键和属性
+    let fiberTag:WorkTag = FunctionComponent
+    if(typeof type === 'string'){
+       fiberTag = HostComponent; // 如果类型是字符串，设置为HostComponent 
+    }else if(typeof type === 'function' && __DEV__) {
+        console.warn('createFiberFromElement未实现的类型');
+    }
+    const fiber = new FiberNode(fiberTag, props, key); // 创建新的Fiber节点
+    fiber.type = type; // 设置Fiber节点的类型
+    return fiber; // 返回创建的Fiber节点
 }
