@@ -1,0 +1,82 @@
+import { Container,appendChildToContainer } from "hostConfig";
+import { FiberNode } from "./fiber"
+import { MutationMask, NoFlags, Placement } from "./fiberFlags";
+import { HostComponent, HostRoot } from "./workTags";
+
+let nextEffect: FiberNode | null = null; // 下一个副作用节点
+
+export const commitMutationEffects = (finishedWork: FiberNode) => {
+    nextEffect = finishedWork
+
+    while (nextEffect !== null) {
+        const child: FiberNode | null = nextEffect.child
+        if ((nextEffect.subtreeFlags & MutationMask) !== NoFlags && child !== null) {
+
+            nextEffect = child // 如果有子节点，继续处理子节点
+        } else {
+            //向上遍历
+            up: while (nextEffect !== null) {
+                commitMutationEffectsOnFiber(nextEffect); // 提交当前副作用节点的变更
+                const sibling: FiberNode | null = nextEffect.sibling; // 获取兄弟节点
+                if (sibling !== null) {
+                    nextEffect = sibling; // 如果有兄弟节点，继续处理兄弟节点
+                    break up; // 跳出循环，继续处理下一个副作用节点
+                }
+                nextEffect = nextEffect.return; // 如果没有兄弟节点，向上回溯到父节点
+            }
+        }
+    }
+
+    const commitMutationEffectsOnFiber = (finishedWork: FiberNode) => {
+        const flags = finishedWork.flags; // 获取当前Fiber节点的标记
+        if ((flags & Placement) !== NoFlags) {
+            commitPlacement(finishedWork); // 提交插入操作
+            finishedWork.flags &= ~Placement;
+        }
+    }
+    function commitPlacement(finishedWork: FiberNode) {
+        if (__DEV__) {
+            console.warn('commitPlacement', finishedWork);
+        }
+        const hostParent = getHostParent(finishedWork); // 获取宿主父节点
+        appendPlacementNodeIntoContainer(finishedWork, hostParent); // 将节点插入到
+    };
+
+    function getHostParent(fiber: FiberNode):Container {
+        let parent = fiber.return; // 获取父节点
+        while (parent) {
+            const parentTag = parent.tag; // 获取父节点的类型
+            if (parentTag === HostComponent) {
+                return parent.stateNode as Container; // 如果父节点是HostComponent或HostRoot，返回其状态节点
+            }
+            if (parentTag === HostRoot) {
+                return (parent.stateNode as Container).container; // 如果父节点是HostRoot，返回其容器信息
+            }
+            parent = parent.return; // 向上回溯到父节点
+        }
+        if (__DEV__) {
+            console.warn('未找到HostParent');
+        }
+        const hostParent = getHostParent(finishedWork); // 获取当前Fiber节点的宿主父节点
+        
+    }
+}
+
+function appendPlacementNodeIntoContainer(
+    finishedWork: FiberNode,
+    hostParent: Container
+) {
+    if(finishedWork.tag === HostComponent || finishedWork.tag === HostRoot) {
+        appendChildToContainer(finishedWork.stateNode, hostParent.stateNode);
+        return
+    }
+    const child = finishedWork.child; // 获取子节点
+    if(child !== null) {
+        appendPlacementNodeIntoContainer(child, hostParent); // 递归处理子节点
+        let sibling = child.sibling; // 获取兄弟节点
+        while(sibling !== null) {
+            appendPlacementNodeIntoContainer(sibling, hostParent); // 递归处理兄弟节点
+            sibling = sibling.sibling; // 获取下一个兄弟节点
+        }
+    }
+}
