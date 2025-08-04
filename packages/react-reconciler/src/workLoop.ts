@@ -1,8 +1,8 @@
 import { completeWork } from './completeWork';
-import { createWorkInProgress, FiberNode } from './fiber';
+import { createWorkInProgress, FiberNode,FiberRootNode } from './fiber';
 import { beginWork } from './beginWork';
-import { FiberRootNode } from './fiber';
 import { HostRoot } from './workTags';
+import {NoFlags,MutationMask} from './fiberFlags';
 
 let workInProgress: FiberNode | null = null;
 
@@ -46,12 +46,42 @@ function renderRoot(root: FiberRootNode) {
     root.finishedWork = finishedWork; // 设置完成的工作节点
     commitRoot(root); // 提交根节点
 }
+
+function commitRoot(root: FiberRootNode) {
+    const finishedWork = root.finishedWork; // 获取完成的工作节点
+    if(finishedWork === null) {
+        return; // 如果没有完成的工作节点，直接返回
+    }
+
+    if(__DEV__) {
+        console.warn('commit阶段开始', finishedWork);
+    }
+    //重置
+    root.finishedWork = null; 
+    
+    //判断是否存在3个子阶段需要执行的操作
+    const subtreeFlags = (finishedWork.subtreeFlags & (MutationMask)) !== NoFlags; // 检查子树标记是否包含变更标记
+    const rootHasEffect = (finishedWork.flags & (MutationMask)) !== NoFlags; // 检查根节点是否有副作用标记
+    if(subtreeFlags || rootHasEffect) {
+        //beforeMutation
+        //mutation Placement
+
+        root.current = finishedWork; // 更新当前节点为完成的工作节点
+        
+        //layout
+    }else{
+        root.current = finishedWork;
+    }
+
+}
+
 function workLoop() {
     while(workInProgress !== null) {
         // 执行工作单元
         performUnitOfWork(workInProgress);
     }
 }
+
 function performUnitOfWork(fiber: FiberNode) {
     const next = beginWork(fiber);
     fiber.memoizedProps = fiber.pengingProps; // 将待处理的属性设置为已处理的属性
