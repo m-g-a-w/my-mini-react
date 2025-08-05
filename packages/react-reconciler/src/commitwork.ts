@@ -11,7 +11,13 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
     const commitMutationEffectsOnFiber = (finishedWork: FiberNode) => {
         const flags = finishedWork.flags; // 获取当前Fiber节点的标记
         if ((flags & Placement) !== NoFlags) {
-            commitPlacement(finishedWork); // 提交插入操作
+            //test时打印错误信息
+            //way one
+            // if (finishedWork.tag !== HostRoot) {
+            //     commitPlacement(finishedWork);
+            // }
+            
+            commitPlacement(finishedWork);
             finishedWork.flags &= ~Placement;
         }
     }
@@ -21,10 +27,14 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
             console.warn('commitPlacement', finishedWork);
         }
         const hostParent = getHostParent(finishedWork); // 获取宿主父节点
-        appendPlacementNodeIntoContainer(finishedWork, hostParent); // 将节点插入到
+        
+        // 只有当hostParent不为null时才执行插入操作
+        if (hostParent !== null) {
+            appendPlacementNodeIntoContainer(finishedWork, hostParent); // 将节点插入到
+        }
     };
 
-    function getHostParent(fiber: FiberNode): Container {
+    function getHostParent(fiber: FiberNode): Container | null {
         let parent = fiber.return; // 获取父节点
         while (parent) {
             const parentTag = parent.tag; // 获取父节点的类型
@@ -32,14 +42,21 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
                 return parent.stateNode as Container; // 如果父节点是HostComponent，返回其状态节点
             }
             if (parentTag === HostRoot) {
-                return parent.stateNode as Container; // 如果父节点是HostRoot，返回其状态节点
+                return parent.stateNode.container as Container;
             }
             parent = parent.return; // 向上回溯到父节点
         }
         if (__DEV__) {
-            console.warn('未找到HostParent');
+            //test时打印错误信息
+            console.warn('未找到HostParent, fiber:', {
+                tag: fiber.tag,
+                key: fiber.key, 
+                type: fiber.type,
+                pengingProps: fiber.pengingProps},
+            );
+            console.warn('未找到HostParent')
         }
-        return null as any; // 添加返回语句
+        return null; // 返回null而不是null as any
     }
 
     while (nextEffect !== null) {
@@ -67,7 +84,7 @@ function appendPlacementNodeIntoContainer(
     hostParent: Container
 ) {
     if(finishedWork.tag === HostComponent || finishedWork.tag === HostRoot) {
-        appendChildToContainer(finishedWork.stateNode, hostParent);
+        appendChildToContainer(hostParent,finishedWork.stateNode);
         return
     }
     const child = finishedWork.child; // 获取子节点

@@ -1,4 +1,12 @@
 import React from 'react';
-const jsx = <div>hello <span>big-react</span></div>
+import ReactDOM from 'react-dom';
+
+const jsx =  (<div>
+    <span>big-react</span>
+    </div>)
+const root = document.querySelector('#root');
+ReactDOM.createRoot(root).render(jsx);
+
 console.log(React);
 console.log(jsx);
+console.log(ReactDOM);

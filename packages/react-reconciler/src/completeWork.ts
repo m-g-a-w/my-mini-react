@@ -1,6 +1,6 @@
 import { FiberNode } from './fiber';
 import { HostComponent, HostRoot, HostText } from './workTags';
-import { createInstance,appendInitialChild, Container } from 'hostConfig';
+import { createInstance,appendInitialChild, Container, createTextInstance } from 'hostConfig';
 import { NoFlags } from './fiberFlags';
 
 export const completeWork = (wip: FiberNode) => {
@@ -23,7 +23,7 @@ export const completeWork = (wip: FiberNode) => {
             if(current !== null && wip.stateNode) {}
             else{
                 //构建DOM
-                const instance = createInstance(newProps.content);
+                const instance = createTextInstance(newProps.content);
                 wip.stateNode = instance; // 将实例赋值给wip的stateNode
             }
             bubbleProperties(wip); // 处理子节点的属性
