@@ -1,0 +1,45 @@
+import { getPackageJSON, resolvePkgPath, getBaseRollupPlugins } from './utils.js';
+import generatePackageJson from 'rollup-plugin-generate-package-json';
+import alias from '@rollup/plugin-alias';
+
+const name = getPackageJSON('react-dom').name;
+//react-dom包的路径
+const pkgPath = resolvePkgPath(name);
+//react-dom产物路径
+const pkgDistPath = resolvePkgPath(name, true);
+export default [
+    //打包react包
+    {
+        input: `${pkgPath}/index.ts`,
+        output: [
+            {
+                file: `${pkgDistPath}/index.js`,
+                name: 'index.js',
+                format: 'umd', //兼容CJS与EMS格式
+            },
+            {
+                file: `${pkgDistPath}/client.js`,
+                name: 'client.js',
+                format: 'umd', //兼容CJS与EMS格式
+            }
+        ],
+        plugins: [
+            alias({
+                entries: [
+                    { find: 'hostConfig', replacement: `${pkgPath}/src/hostConfig.ts` }
+                ]
+            }),
+            ...getBaseRollupPlugins(), generatePackageJson({
+                inputFolder: pkgPath,
+                outputFolder: pkgDistPath,
+                baseContents: ({ name, description, version }) => ({
+                    name, description, version,
+                    peerDependencies: {
+                        react: version
+                    },
+                    main: 'index.js'
+                })
+            })
+        ]
+    }
+]

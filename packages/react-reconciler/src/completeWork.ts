@@ -1,7 +1,6 @@
 import { FiberNode } from './fiber';
 import { HostComponent, HostRoot, HostText } from './workTags';
-import { createInstance } from './hostConfig';
-import {appendInitialChild} from './hostConfig';
+import { createInstance,appendInitialChild, Container } from 'hostConfig';
 import { NoFlags } from './fiberFlags';
 
 export const completeWork = (wip: FiberNode) => {
@@ -13,7 +12,7 @@ export const completeWork = (wip: FiberNode) => {
             if(current !== null && wip.stateNode) {}
             else{
                 //1.构建DOM
-                const instance = createInstance(newProps.content);
+                const instance = createInstance(wip.type);
                 //2.将DOM插入到DOM树中
                 appendAllChildren(instance, wip); // 将子节点添加到实例中
                 wip.stateNode = instance; // 将实例赋值给wip的stateNode
@@ -41,7 +40,7 @@ export const completeWork = (wip: FiberNode) => {
 }
 
 function appendAllChildren(
-    parent: FiberNode,
+    parent: Container,
     wip: FiberNode
 ) {
     let node = wip.child;
