@@ -47,13 +47,6 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
             parent = parent.return; // 向上回溯到父节点
         }
         if (__DEV__) {
-            //test时打印错误信息
-            console.warn('未找到HostParent, fiber:', {
-                tag: fiber.tag,
-                key: fiber.key, 
-                type: fiber.type,
-                pengingProps: fiber.pengingProps},
-            );
             console.warn('未找到HostParent')
         }
         return null; // 返回null而不是null as any

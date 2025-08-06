@@ -1,8 +1,10 @@
 import { FiberNode } from "./fiber";
-import { HostRoot,HostText,HostComponent } from "./workTags";
+import { HostRoot,HostText,HostComponent,FunctionComponent } from "./workTags";
 import {processUpdateQueue} from "./updateQueue";
 import { ReactElement } from "shared/ReactTypes";
 import { reconcileChildFibers, mountChildFibers } from "./childFibers";
+import { renderWithHooks } from "./fiberHooks";
+
 //递归中的递阶段
 export const beginWork = (wip: FiberNode) => {
     //比较，返回子fiberNode
@@ -13,6 +15,8 @@ export const beginWork = (wip: FiberNode) => {
             return updateHostComponent(wip); // 更新组件节点
         case HostText: 
             return null;
+        case FunctionComponent:
+            return updateFunctionComponent(wip);
         default:
             if(__DEV__) {
                 console.warn('beginWork未实现的类型');
@@ -20,6 +24,11 @@ export const beginWork = (wip: FiberNode) => {
             break;
     }
     return null
+}
+function updateFunctionComponent(wip: FiberNode) {
+    const nextChildren = renderWithHooks(wip); // 使用钩子渲染组件
+    reconileChildren(wip, nextChildren); // 递归处理子节点
+    return wip.child; // 返回子节点
 }
 function updateHostRoot(wip: FiberNode) {
     const baseState = wip.memoizedProps; // 获取基础状态
