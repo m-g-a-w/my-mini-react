@@ -39,7 +39,9 @@ export const jsx = (type: ElementType,config: any,...maybeChildren: any): ReactE
         }
     }   
     return ReactElement(type,key,ref,props);
-}   
+}
+
+export const createElement = jsx;
 export const jsxDEV = (type: ElementType,config: any): ReactElement => {
     let key:Key = null;
     const props: Props = {};

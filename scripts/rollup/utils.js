@@ -19,10 +19,12 @@ export function getPackageJSON(pkgName, isDist) {
     return JSON.parse(str);
 }
 
-export function getBaseRollupPlugins({alias={
-    __DEV__: true,
-    preventAssignment: true,
-},typescript = {}}={}){
+export function getBaseRollupPlugins({
+    alias={
+        __DEV__: true,
+        preventAssignment: true,
+    },
+    typescript = {}}={}){
     return [replace(alias),cjs(),ts(typescript)]
 }
 

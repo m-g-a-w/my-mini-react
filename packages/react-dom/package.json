@@ -2,7 +2,7 @@
   "name": "react-dom",
   "version": "1.0.0",
   "description": "",
-  "moudle": "index.ts",
+  "module": "index.ts",
   "dependencies": {
     "react-reconciler": "workspace:*",
     "shared": "workspace:*"
