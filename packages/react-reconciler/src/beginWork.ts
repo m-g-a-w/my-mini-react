@@ -36,9 +36,9 @@ function updateHostRoot(wip: FiberNode) {
     const pending = updateQueue.shared.pending; // 获取待处理的更新
     updateQueue.shared.pending = null; // 清空待处理的更新
     const { memoizedState } = processUpdateQueue(baseState, pending); // 处理更新队列
-    wip.memoiszedState = memoizedState; // 更新已处理状态
+    wip.memoizedState = memoizedState; // 更新已处理状态
 
-    const nextChildren = wip.memoiszedState; // 获取待处理的子节点
+    const nextChildren = wip.memoizedState; // 获取待处理的子节点
     reconileChildren(wip, nextChildren); // 递归处理子节点
     return wip.child; // 返回子节点
 }

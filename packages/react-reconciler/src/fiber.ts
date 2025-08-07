@@ -17,7 +17,7 @@ export class FiberNode {
     index: number; // 在兄弟节点中的索引
     
     memoizedProps: Props | null; // 已处理的属性
-    memoiszedState: any; // 已处理的状态
+    memoizedState: any; // 已处理的状态
     alternate: FiberNode | null; // 用于在workinProgess与current两棵缓存树中进行切换
     flags: Flags; // 用于标记Fiber的状态，如更新、删除等
     subtreeFlags: Flags; // 子树的标记，用于标记子节点的状态
@@ -38,7 +38,7 @@ export class FiberNode {
         //作为工作单元
         this.pengingProps = pengingProps; // 待处理的属性
         this.memoizedProps = null; // 已处理的属性
-        this.memoiszedState = null; // 已处理的状态
+        this.memoizedState = null; // 已处理的状态
         this.updateQueue = null; // 更新队列，用于存储待处理的更新
         
         this.alternate = null; // 用于在workinProgess与current两棵缓存树中进行切换
@@ -77,7 +77,7 @@ export const createWorkInProgress = (current: FiberNode, pendingProps: Props): F
     wip.updateQueue = current.updateQueue; // 继承当前节点的更新队列
     wip.child = current.child; // 继承当前节点的子节点
     wip.memoizedProps = current.memoizedProps; // 继承当前节点的已处理属性
-    wip.memoiszedState = current.memoiszedState; // 继承当前
+    wip.memoizedState = current.memoizedState; // 继承当前
     return wip; // 返回备用节点
 }
 export const createFiberFromElement = (element: ReactElement): FiberNode => {
