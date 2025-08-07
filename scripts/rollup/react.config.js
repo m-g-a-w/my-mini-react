@@ -12,7 +12,7 @@ export default [
     input: `${pkgPath}/index.ts`,
     output: {
       file: `${pkgDistPath}/index.js`,
-      name: 'index.js',
+      name: 'React',
       format: 'umd', //兼容CJS与EMS格式
     },
     plugins: [...getBaseRollupPlugins(),generatePackageJson({
@@ -32,13 +32,13 @@ export default [
       //jsx-runtime
       {
         file: `${pkgDistPath}/jsx-runtime.js`,
-        name: 'jsx-runtime.js',
+        name: 'jsx-runtime',
         format: 'umd', //兼容CJS与EMS格式
       },
       //jsx-dev-runtime
       {
         file: `${pkgDistPath}/jsx-dev-runtime.js`,
-        name: 'jsx-dev-runtime.js',
+        name: 'jsx-dev-runtime',
         format: 'umd', //兼容CJS与EMS格式
       }
     ],

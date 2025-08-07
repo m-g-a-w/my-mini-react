@@ -44,17 +44,17 @@ const HooksDispatcherOnMount: Dispatcher = {
 function mountState<State>(
     initialState: (() => State) | State
 ): [State, Dispatch<State>] {
-    const hook = mountWorkInProgressHook(); // 创建一个新的hook
+        const hook = mountWorkInProgressHook(); // 创建一个新的hook
     let memoizedState; // 定义hook的状态
-    if(initialState instanceof Function) {
-        // 如果初始状态是一个函数，则调用它
-        memoizedState = initialState();
+        if(initialState instanceof Function) {
+            // 如果初始状态是一个函数，则调用它
+            memoizedState = initialState();
     } else {
-        // 否则直接使用初始状态
-        memoizedState = initialState;
-    }
-    const queue = createUpdateQueue<State>(); // 创建一个更新队列
-    hook.updateQueue = queue; // 将更新队列赋值给hook
+            // 否则直接使用初始状态
+            memoizedState = initialState;
+        }
+        const queue = createUpdateQueue<State>(); // 创建一个更新队列
+        hook.updateQueue = queue; // 将更新队列赋值给hook
 
     // @ts-ignore
     const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue);
@@ -68,7 +68,7 @@ function dispatchSetState<State>(
     const update = createUpdate(action);
     enqueueUpdate(updateQueue, update);
     scheduleUpdateOnFiber(fiber);
-}
+    }
 function mountWorkInProgressHook(): Hook {
     const hook: Hook = {
         memoizedState: null, // 初始化hook的状态为null
