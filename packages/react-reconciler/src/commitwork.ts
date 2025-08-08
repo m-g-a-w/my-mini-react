@@ -1,7 +1,8 @@
-import { Container,appendChildToContainer } from "hostConfig";
+import { Container, appendChildToContainer, commitUpdate,removeChild } from "hostConfig";
 import { FiberNode } from "./fiber"
-import { MutationMask, NoFlags, Placement } from "./fiberFlags";
-import { HostComponent, HostRoot } from "./workTags";
+import { ChildDeletion, MutationMask, NoFlags, Placement, Update } from "./fiberFlags";
+import { HostComponent, HostRoot,FunctionComponent } from "./workTags";
+
 
 let nextEffect: FiberNode | null = null; // 下一个副作用节点
 
@@ -11,14 +12,83 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
     const commitMutationEffectsOnFiber = (finishedWork: FiberNode) => {
         const flags = finishedWork.flags; // 获取当前Fiber节点的标记
         if ((flags & Placement) !== NoFlags) {
-            //test时打印错误信息
-            //way one
-            // if (finishedWork.tag !== HostRoot) {
-            //     commitPlacement(finishedWork);
-            // }
-            
             commitPlacement(finishedWork);
             finishedWork.flags &= ~Placement;
+        }
+        if ((flags & Update) !== NoFlags) {
+            commitUpdate(finishedWork);
+            finishedWork.flags &= ~Update;
+        }
+        if ((flags & ChildDeletion) !== NoFlags) {
+            const deletions = finishedWork.deletions;
+            if (deletions !== null) {
+                deletions.forEach(ChildDeletion => {
+                    commitDeletion(ChildDeletion);
+                })
+            }
+            finishedWork.flags &= ~ChildDeletion;
+        }
+    }
+
+    function commitDeletion(childToDelete: FiberNode) {
+        let rootHostNode: FiberNode | null = null;
+
+        //递归子树
+        commitNestedComponent(childToDelete, unmountFiber => {
+            switch (unmountFiber.tag) {
+                case HostComponent:
+                    if (rootHostNode === null) {
+                        rootHostNode = unmountFiber;
+                    }
+                    return;
+                case HostRoot:
+                    if (rootHostNode === null) {
+                        rootHostNode = unmountFiber;
+                    }
+                    return;
+                case FunctionComponent:
+                    return;
+                default:
+                    if(__DEV__){
+                        console.warn("未实现的commitDeletion类型",unmountFiber.tag);
+                    }
+                    break;
+            }
+        });
+        //移除rootHostNode的DOM
+        if(rootHostNode !== null){
+            const hostParent = getHostParent(rootHostNode);
+            if(hostParent !== null){
+                removeChild(rootHostNode,hostParent);
+            }
+        }
+        childToDelete.return = null;
+        childToDelete.child = null;
+    }
+
+    function commitNestedComponent(
+        root: FiberNode,
+        onCommitUnmount: (fiber: FiberNode) => void
+    ) {
+        let node = root;
+        while (true) {
+            onCommitUnmount(node);
+            if (node.child !== null) {
+                node.child.return = node;
+                node = node.child;
+                continue;
+            }
+            if (node === root) {
+                return;
+            }
+            while (node.sibling === null) {
+                if (node.return === null || node.return === root) {
+                    return
+                }
+                node = node.return;
+            }
+            node.sibling.return = node.return;
+            node = node.sibling;
         }
     }
 
@@ -27,12 +97,12 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
             console.warn('commitPlacement', finishedWork);
         }
         const hostParent = getHostParent(finishedWork); // 获取宿主父节点
-        
+
         // 只有当hostParent不为null时才执行插入操作
         if (hostParent !== null) {
             appendPlacementNodeIntoContainer(finishedWork, hostParent); // 将节点插入到
         }
-    };
+    }
 
     function getHostParent(fiber: FiberNode): Container | null {
         let parent = fiber.return; // 获取父节点
@@ -52,11 +122,29 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
         return null; // 返回null而不是null as any
     }
 
-    while (nextEffect !== null) {
-        const child: FiberNode | null = nextEffect.child
-        if ((nextEffect.subtreeFlags & MutationMask) !== NoFlags && child !== null) {
+    function appendPlacementNodeIntoContainer(
+        finishedWork: FiberNode,
+        hostParent: Container
+    ) {
+        if (finishedWork.tag === HostComponent || finishedWork.tag === HostRoot) {
+            appendChildToContainer(hostParent, finishedWork.stateNode);
+            return
+        }
+        const child = finishedWork.child; // 获取子节点
+        if (child !== null) {
+            appendPlacementNodeIntoContainer(child, hostParent); // 递归处理子节点
+            let sibling = child.sibling; // 获取兄弟节点
+            while (sibling !== null) {
+                appendPlacementNodeIntoContainer(sibling, hostParent); // 递归处理兄弟节点
+                sibling = sibling.sibling; // 获取下一个兄弟节点
+            }
+        }
+    }
 
-            nextEffect = child // 如果有子节点，继续处理子节点
+    while (nextEffect !== null) {
+        const child: FiberNode | null = nextEffect.child;
+        if ((nextEffect.subtreeFlags & MutationMask) !== NoFlags && child !== null) {
+            nextEffect = child; // 如果有子节点，继续处理子节点
         } else {
             //向上遍历
             up: while (nextEffect !== null) {
@@ -68,25 +156,6 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
                 }
                 nextEffect = nextEffect.return; // 如果没有兄弟节点，向上回溯到父节点
             }
-        }
-    }
-}
-
-function appendPlacementNodeIntoContainer(
-    finishedWork: FiberNode,
-    hostParent: Container
-) {
-    if(finishedWork.tag === HostComponent || finishedWork.tag === HostRoot) {
-        appendChildToContainer(hostParent,finishedWork.stateNode);
-        return
-    }
-    const child = finishedWork.child; // 获取子节点
-    if(child !== null) {
-        appendPlacementNodeIntoContainer(child, hostParent); // 递归处理子节点
-        let sibling = child.sibling; // 获取兄弟节点
-        while(sibling !== null) {
-            appendPlacementNodeIntoContainer(sibling, hostParent); // 递归处理兄弟节点
-            sibling = sibling.sibling; // 获取下一个兄弟节点
         }
     }
 }
