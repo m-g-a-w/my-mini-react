@@ -1,7 +1,11 @@
 import { FiberNode } from './fiber';
 import { HostComponent, HostRoot, HostText,FunctionComponent } from './workTags';
 import { createInstance,appendInitialChild, Container, createTextInstance } from 'hostConfig';
-import { NoFlags } from './fiberFlags';
+import { NoFlags,Update } from './fiberFlags';
+
+function markUpdate(wip: FiberNode){
+    wip.flags |= Update;
+}
 
 export const completeWork = (wip: FiberNode) => {
     //递归中的归
@@ -20,7 +24,14 @@ export const completeWork = (wip: FiberNode) => {
             bubbleProperties(wip); // 处理子节点的属性
             return null;
         case HostText:
-            if(current !== null && wip.stateNode) {}
+            if(current !== null && wip.stateNode) {
+                //update
+                const oldText = current.memoizedProps.content;
+                const newText = newProps.content;
+                if(oldText !== newText){
+                    markUpdate(wip);
+                }
+            }
             else{
                 //构建DOM
                 const instance = createTextInstance(newProps.content);
@@ -28,6 +39,7 @@ export const completeWork = (wip: FiberNode) => {
             }
             bubbleProperties(wip); // 处理子节点的属性
             return null;
+
         case HostRoot:
             bubbleProperties(wip);
             return null; 

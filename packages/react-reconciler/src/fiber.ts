@@ -22,6 +22,7 @@ export class FiberNode {
     flags: Flags; // 用于标记Fiber的状态，如更新、删除等
     subtreeFlags: Flags; // 子树的标记，用于标记子节点的状态
     updateQueue: any; // 更新队列，用于存储待处理的更新
+    deletions: FiberNode[] | null
 
     constructor(tag: WorkTag,pengingProps: Props,key: Key){
         this.tag = tag; // Fiber的类型
@@ -45,7 +46,7 @@ export class FiberNode {
         //副作用
         this.flags = NoFlags; //用于标记Fiber的状态，如更新、删除等
         this.subtreeFlags = NoFlags; // 子树的标记，用于标记子节点的状态
-        
+        this.deletions = null
     }
 }
 export class FiberRootNode{
@@ -72,6 +73,8 @@ export const createWorkInProgress = (current: FiberNode, pendingProps: Props): F
         //update
         wip.pengingProps = pendingProps; // 更新备用节点的待处理属性
         wip.flags = NoFlags; // 重置备用节点的标记
+        wip.subtreeFlags = NoFlags
+        wip.deletions = null
     }
     wip.type = current.type; // 确保备用节点的类型与当前节点一致
     wip.updateQueue = current.updateQueue; // 继承当前节点的更新队列
