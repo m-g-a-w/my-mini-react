@@ -31,7 +31,7 @@ function updateFunctionComponent(wip: FiberNode) {
     return wip.child; // 返回子节点
 }
 function updateHostRoot(wip: FiberNode) {
-    const baseState = wip.memoizedProps; // 获取基础状态
+    const baseState = wip.memoizedState; // 获取基础状态
     const updateQueue = wip.updateQueue; // 获取更新队列
     const pending = updateQueue.shared.pending; // 获取待处理的更新
     updateQueue.shared.pending = null; // 清空待处理的更新

@@ -5,7 +5,7 @@ function App() {
   const [num,setNum] = useState(100)
   window.setNum = setNum
   return (
-    <div>{num}</div>
+    num === 3? <Child /> : <div>{num}</div>
   );
 }
 function Child(){

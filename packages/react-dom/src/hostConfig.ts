@@ -37,5 +37,7 @@ export function commitTextUpdate(textInstance: TextInstance,content: string){
     textInstance.textContent = content;
 }
 export const removeChild = (child: Instance | TextInstance,container: Container) => {
-    container.removeChild(child);
+    if (child && container) {
+        container.removeChild(child);
+    }
 }

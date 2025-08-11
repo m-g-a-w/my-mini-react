@@ -1,7 +1,7 @@
 import { Container, appendChildToContainer, commitUpdate,removeChild } from "hostConfig";
 import { FiberNode } from "./fiber"
 import { ChildDeletion, MutationMask, NoFlags, Placement, Update } from "./fiberFlags";
-import { HostComponent, HostRoot,FunctionComponent } from "./workTags";
+import { HostComponent, HostRoot, FunctionComponent, HostText } from "./workTags";
 
 
 let nextEffect: FiberNode | null = null; // 下一个副作用节点
@@ -46,6 +46,11 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
                         rootHostNode = unmountFiber;
                     }
                     return;
+                case HostText:
+                    if (rootHostNode === null) {
+                        rootHostNode = unmountFiber;
+                    }
+                    return;
                 case FunctionComponent:
                     return;
                 default:
@@ -58,8 +63,8 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
         //移除rootHostNode的DOM
         if(rootHostNode !== null){
             const hostParent = getHostParent(rootHostNode);
-            if(hostParent !== null){
-                removeChild(rootHostNode,hostParent);
+            if(hostParent !== null && (rootHostNode as FiberNode).stateNode){
+                removeChild((rootHostNode as FiberNode).stateNode, hostParent);
             }
         }
         childToDelete.return = null;

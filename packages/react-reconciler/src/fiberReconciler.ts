@@ -8,7 +8,8 @@ import {scheduleUpdateOnFiber} from './workLoop';
 export function createContainer(container: Container){
     const hostRootFiber = new FiberNode(HostRoot, {}, null); // 创建根Fiber节点
     const root = new FiberRootNode(container, hostRootFiber); // 创建Fiber根节点
-    hostRootFiber.updateQueue = createUpdateQueue(); // 初始化更新队列
+    hostRootFiber.updateQueue = createUpdateQueue<ReactElement | null>(); // 初始化更新队列
+    hostRootFiber.memoizedState = null; // 初始化memoizedState为null
     return root;
 }
 export function updateContainer(element: ReactElement | null,root: FiberRootNode){

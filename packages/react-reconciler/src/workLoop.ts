@@ -8,12 +8,23 @@ import { commitMutationEffects } from './commitwork';
 let workInProgress: FiberNode | null = null;
 
 function prepareRefreshStack(root: FiberRootNode) {
+    if (root.current === null) {
+        if (__DEV__) {
+            console.warn('root.current 为 null');
+        }
+        return;
+    }
     workInProgress = createWorkInProgress(root.current,{}); // 设置当前工作中的Fiber节点
-
 }
 export function scheduleUpdateOnFiber(fiber: FiberNode){
     //调度功能
     const root = markUpdateFromFiberToRoot(fiber); // 标记从Fiber节点到根节点的更新
+    if (root === null) {
+        if (__DEV__) {
+            console.warn('无法找到FiberRootNode');
+        }
+        return;
+    }
     renderRoot(root); // 渲染根节点
 }
 function markUpdateFromFiberToRoot(fiber: FiberNode) {
@@ -31,6 +42,14 @@ function markUpdateFromFiberToRoot(fiber: FiberNode) {
 
 function renderRoot(root: FiberRootNode) {
     prepareRefreshStack(root)
+    
+    if (workInProgress === null) {
+        if (__DEV__) {
+            console.warn('workInProgress 为 null，跳过渲染');
+        }
+        return;
+    }
+    
     do{
         try{
             workLoop();
