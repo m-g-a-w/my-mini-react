@@ -2,6 +2,7 @@ import { FiberNode } from './fiber';
 import { HostComponent, HostRoot, HostText,FunctionComponent } from './workTags';
 import { createInstance,appendInitialChild, Container, createTextInstance } from 'hostConfig';
 import { NoFlags,Update } from './fiberFlags';
+import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
 
 function markUpdate(wip: FiberNode){
     wip.flags |= Update;
@@ -13,10 +14,15 @@ export const completeWork = (wip: FiberNode) => {
     const current = wip.alternate; // 获取当前的备用节点
     switch (wip.tag) {
         case HostComponent:
-            if(current !== null && wip.stateNode) {}
+            if(current !== null && wip.stateNode) {
+                //update
+                //判断props是否变化
+                //如果变化则添加update tag
+                updateFiberProps(wip.stateNode,newProps);
+            }
             else{
                 //1.构建DOM
-                const instance = createInstance(wip.type);
+                const instance = createInstance(wip.type,newProps);
                 //2.将DOM插入到DOM树中
                 appendAllChildren(instance, wip); // 将子节点添加到实例中
                 wip.stateNode = instance; // 将实例赋值给wip的stateNode

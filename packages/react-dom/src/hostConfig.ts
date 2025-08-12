@@ -1,15 +1,19 @@
 import { FiberNode } from "react-reconciler/src/fiber";
-import { HostText } from "react-reconciler/src/workTags";
+import { HostText,HostComponent } from "react-reconciler/src/workTags";
+import { Props } from "shared/ReactTypes";
+import { updateFiberProps } from "./SyntheticEvent";
+import { DOMElement } from "./SyntheticEvent";
 
 export type Container = Element; // 容器类型，可以是DOM元素或其他容器
 export type Instance = Element; // 容器类型，可以是DOM元素或其他容器
 export type TextInstance = Text;
 
 // export const createIns÷tance = (type: string,props: any): Instance => {
-export const createInstance = (type: string): Instance => {
+export const createInstance = (type: string,props: Props): Instance => {
     
-    const element = document.createElement(type); // 创建一个新的DOM元素
-    return element; // 返回创建的DOM元素
+    const element = document.createElement(type) as unknown; // 创建一个新的DOM元素
+    updateFiberProps(element as DOMElement,props);
+    return element as DOMElement; // 返回创建的DOM元素
 }
 
 export const appendInitialChild = (parent: Instance | Container,child: Instance) => {
@@ -25,6 +29,8 @@ export const commitUpdate = (fiber: FiberNode) => {
         case HostText:
             const text = fiber.memoizedProps.content;
             return commitTextUpdate(fiber.stateNode,text);
+        case HostComponent:
+            return updateFiberProps(fiber.stateNode,fiber.memoizedProps);
         default:
             if(__DEV__){
                 console.warn("未实现的update类型");
