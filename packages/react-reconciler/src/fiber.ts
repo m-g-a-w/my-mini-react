@@ -1,5 +1,5 @@
 import {Props,Key,Ref, ReactElement} from 'shared/ReactTypes'
-import {FunctionComponent, WorkTag,HostComponent} from './workTags'
+import {FunctionComponent, WorkTag,HostComponent, Fragment} from './workTags'
 import {Flags,NoFlags} from './fiberFlags'
 import {Container} from 'hostConfig'
 
@@ -94,4 +94,10 @@ export const createFiberFromElement = (element: ReactElement): FiberNode => {
     const fiber = new FiberNode(fiberTag, props, key); // 创建新的Fiber节点
     fiber.type = type; // 设置Fiber节点的类型
     return fiber; // 返回创建的Fiber节点
+}
+
+export const createFiberFromFragment = (elements: any[], key: Key): FiberNode => {
+    const fiber = new FiberNode(Fragment, elements, key);
+    fiber.type = Fragment;
+    return fiber;
 }

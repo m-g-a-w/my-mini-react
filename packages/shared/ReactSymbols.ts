@@ -3,3 +3,7 @@ export const REACT_ELEMENT_TYPE = supportSymbol
     ? Symbol.for('react.element') 
     : 0xeac7;//react元素类型
 
+export const REACT_FRAGMENT_TYPE = supportSymbol
+    ? Symbol.for('react.fragment')
+    : 0xeacb;//react片段类型
+

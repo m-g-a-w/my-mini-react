@@ -4,6 +4,7 @@ export type Ref = any;
 export type Props = any;
 export type ReactType = any;
 export type ElementType = any;
+export type ReactElementType = any;
 export interface ReactElement {
     $$typeof: symbol | number; // 用于标识React元素类型
     type: ElementType; // 元素类型
