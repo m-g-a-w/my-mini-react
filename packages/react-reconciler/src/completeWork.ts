@@ -10,7 +10,7 @@ function markUpdate(wip: FiberNode){
 
 export const completeWork = (wip: FiberNode) => {
     //递归中的归
-    const newProps = wip.pengingProps; // 获取待处理的属性
+    const newProps = wip.pendingProps; // 获取待处理的属性
     const current = wip.alternate; // 获取当前的备用节点
     switch (wip.tag) {
         case HostComponent:

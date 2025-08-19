@@ -33,7 +33,7 @@ export function renderWithHooks(wip: FiberNode) {
         wip.memoizedState = null; // 初始化memoizedState为null
     }
     const Component = wip.type; // 获取组件类型
-    const props = wip.pengingProps; // 获取待处理的属性
+    const props = wip.pendingProps; // 获取待处理的属性
     const children = Component(props); // 调用组件函数获取子节点
 
     //重置操作

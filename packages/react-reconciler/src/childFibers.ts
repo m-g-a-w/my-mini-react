@@ -340,7 +340,7 @@ export function cloneChildFibers(wip: FiberNode) {
 		return;
 	}
 	let currentChild = wip.child;
-	let newChild = createWorkInProgress(currentChild, currentChild.pengingProps);
+	let newChild = createWorkInProgress(currentChild, currentChild.pendingProps);
 	wip.child = newChild;
 	newChild.return = wip;
 
@@ -348,7 +348,7 @@ export function cloneChildFibers(wip: FiberNode) {
 		currentChild = currentChild.sibling;
 		newChild = newChild.sibling = createWorkInProgress(
 			newChild,
-			newChild.pengingProps
+			newChild.pendingProps
 		);
 		newChild.return = wip;
 	}

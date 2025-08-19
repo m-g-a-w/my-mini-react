@@ -43,7 +43,7 @@ function updateHostRoot(wip: FiberNode) {
     return wip.child; // 返回子节点
 }
 function updateHostComponent(wip: FiberNode) {
-    const nextProps = wip.pengingProps; // 获取待处理的属性
+    const nextProps = wip.pendingProps; // 获取待处理的属性
     const nextChildren = nextProps.children; // 获取待处理的属性
     reconileChildren(wip, nextChildren); // 递归处理子节点
     return wip.child; // 返回子节点

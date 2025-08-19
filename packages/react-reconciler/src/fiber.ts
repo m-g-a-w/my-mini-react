@@ -10,7 +10,7 @@ export class FiberNode {
     ref: Ref; // 引用
     stateNode: any; // 关联的DOM节点或组件实例
 
-    pengingProps: Props; // 待处理的属性
+    pendingProps: Props; // 待处理的属性
     return: FiberNode | null; // 指向父Fiber节点
     sibling: FiberNode | null; // 指向兄弟Fiber节点
     child: FiberNode | null; // 指向子Fiber节点
@@ -24,7 +24,7 @@ export class FiberNode {
     updateQueue: any; // 更新队列，用于存储待处理的更新
     deletions: FiberNode[] | null
 
-    constructor(tag: WorkTag,pengingProps: Props,key: Key){
+    constructor(tag: WorkTag,pendingProps: Props,key: Key){
         this.tag = tag; // Fiber的类型
         this.key = key; // 唯一标识符  
         this.type = null; // 元素类型   
@@ -37,7 +37,7 @@ export class FiberNode {
         this.ref = null; // 引用
 
         //作为工作单元
-        this.pengingProps = pengingProps; // 待处理的属性
+        this.pendingProps = pendingProps; // 待处理的属性
         this.memoizedProps = null; // 已处理的属性
         this.memoizedState = null; // 已处理的状态
         this.updateQueue = null; // 更新队列，用于存储待处理的更新
@@ -71,7 +71,7 @@ export const createWorkInProgress = (current: FiberNode, pendingProps: Props): F
         current.alternate = wip; // 设置当前节点的alternate指向备用节点
     }else{
         //update
-        wip.pengingProps = pendingProps; // 更新备用节点的待处理属性
+        wip.pendingProps = pendingProps; // 更新备用节点的待处理属性
         wip.flags = NoFlags; // 重置备用节点的标记
         wip.subtreeFlags = NoFlags
         wip.deletions = null

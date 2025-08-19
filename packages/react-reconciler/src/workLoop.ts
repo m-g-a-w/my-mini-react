@@ -105,7 +105,7 @@ function workLoop() {
 
 function performUnitOfWork(fiber: FiberNode) {
     const next = beginWork(fiber);
-    fiber.memoizedProps = fiber.pengingProps; // 将待处理的属性设置为已处理的属性
+    fiber.memoizedProps = fiber.pendingProps; // 将待处理的属性设置为已处理的属性
     if(next === null) {
         completeUnitOfWork(fiber); // 如果没有下一个工作单元，完成当前工作单元
     }else{
