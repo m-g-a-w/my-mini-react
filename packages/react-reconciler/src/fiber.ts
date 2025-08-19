@@ -26,7 +26,7 @@ export class FiberNode {
 
     constructor(tag: WorkTag,pendingProps: Props,key: Key){
         this.tag = tag; // Fiber的类型
-        this.key = key; // 唯一标识符  
+        this.key =  key || null; // 唯一标识符  
         this.type = null; // 元素类型   
         
         //树状结构
@@ -98,6 +98,6 @@ export const createFiberFromElement = (element: ReactElement): FiberNode => {
 
 export const createFiberFromFragment = (elements: any[], key: Key): FiberNode => {
     const fiber = new FiberNode(Fragment, elements, key);
-    fiber.type = Fragment;
+    // fiber.type = Fragment;
     return fiber;
 }

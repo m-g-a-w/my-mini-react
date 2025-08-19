@@ -30,7 +30,7 @@ export default defineConfig({
       },
       {
         find:'react/jsx-runtime',
-        replacement:resolvePkgPath('react') + '/jsx-dev-runtime'
+        replacement:resolvePkgPath('react') + '/jsx-runtime'
       },
       {
         find:'react/jsx-dev-runtime',

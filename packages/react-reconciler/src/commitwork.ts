@@ -29,29 +29,42 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
             finishedWork.flags &= ~ChildDeletion;
         }
     }
+    function recordHostChildrenToDelete(
+        childrenToDelete: FiberNode[],
+        unmountFiber: FiberNode){
+        //1.找到第一个root host节点
+        let lastOne = childrenToDelete[childrenToDelete.length - 1]
+        if(!lastOne){
+            childrenToDelete.push(unmountFiber)
+        }else{
+            let node = lastOne.sibling
+            while(node !== null){
+                if(unmountFiber === node){
+                    childrenToDelete.push(unmountFiber)
+                }
+                node = node.sibling
+            }
+        }
+        //2.每找到一个host节点，判断这个节点是不是找到那个节点的兄弟节点
 
+    }
     function commitDeletion(childToDelete: FiberNode) {
-        let rootHostNode: FiberNode | null = null;
+        let rootChildrenToDelete: FiberNode[] = [];
 
         //递归子树
         commitNestedComponent(childToDelete, unmountFiber => {
             switch (unmountFiber.tag) {
                 case HostComponent:
-                    if (rootHostNode === null) {
-                        rootHostNode = unmountFiber;
-                    }
+                    recordHostChildrenToDelete(rootChildrenToDelete,unmountFiber)
                     return;
-                case HostRoot:
-                    if (rootHostNode === null) {
-                        rootHostNode = unmountFiber;
-                    }
-                    return;
+                // case HostRoot:
+                //     recordHostChildrenToDelete(rootChildrenToDelete,unmountFiber)
+                //     return;
                 case HostText:
-                    if (rootHostNode === null) {
-                        rootHostNode = unmountFiber;
-                    }
+                    recordHostChildrenToDelete(rootChildrenToDelete,unmountFiber)
                     return;
                 case FunctionComponent:
+                    //
                     return;
                 default:
                     if(__DEV__){
@@ -61,10 +74,12 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
             }
         });
         //移除rootHostNode的DOM
-        if(rootHostNode !== null){
-            const hostParent = getHostParent(rootHostNode);
-            if(hostParent !== null && (rootHostNode as FiberNode).stateNode){
-                removeChild((rootHostNode as FiberNode).stateNode, hostParent);
+        if(rootChildrenToDelete.length){
+            const hostParent = getHostParent(childToDelete);
+            if (hostParent !== null) {
+                rootChildrenToDelete.forEach(node => {
+                    removeChild(node.stateNode, hostParent)
+                })
             }
         }
         childToDelete.return = null;

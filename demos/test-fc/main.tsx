@@ -14,6 +14,8 @@ function App() {
   ]
   return (
     <ul onClickCapture={() => {setNum(num + 1)}}>
+      <li>4</li>
+      <li>5</li>
       {arr}
     </ul>
   );

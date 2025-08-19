@@ -1,5 +1,5 @@
 import { FiberNode } from "./fiber";
-import { HostRoot,HostText,HostComponent,FunctionComponent } from "./workTags";
+import { HostRoot,HostText,HostComponent,FunctionComponent,Fragment } from "./workTags";
 import {processUpdateQueue} from "./updateQueue";
 import { ReactElement } from "shared/ReactTypes";
 import { reconcileChildFibers, mountChildFibers } from "./childFibers";
@@ -17,7 +17,9 @@ export const beginWork = (wip: FiberNode) => {
             return null;
         case FunctionComponent:
             return updateFunctionComponent(wip);
-        default:
+        case Fragment:
+            return updateFragment(wip);
+            default:
             if(__DEV__) {
                 console.warn('beginWork未实现的类型');
             }
@@ -39,6 +41,11 @@ function updateHostRoot(wip: FiberNode) {
     wip.memoizedState = memoizedState; // 更新已处理状态
 
     const nextChildren = wip.memoizedState; // 获取待处理的子节点
+    reconileChildren(wip, nextChildren); // 递归处理子节点
+    return wip.child; // 返回子节点
+}
+function updateFragment(wip: FiberNode) {
+    const nextChildren = wip.pendingProps; // 获取待处理的子节点
     reconileChildren(wip, nextChildren); // 递归处理子节点
     return wip.child; // 返回子节点
 }

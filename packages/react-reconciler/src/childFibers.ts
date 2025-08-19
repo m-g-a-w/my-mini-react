@@ -206,18 +206,8 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 		const keyToUse = getElementKeyToUse(element, index);
 		const before = existingChildren.get(keyToUse);
 
-		// HostText
-		if (typeof element === 'string' || typeof element === 'number') {
-			if (before) {
-				if (before.tag === HostText) {
-					existingChildren.delete(keyToUse);
-					return useFiber(before, { content: element + '' });
-				}
-			}
-			return new FiberNode(HostText, { content: element + '' }, null);
-		}
-
-		// ReactElement
+		
+		// 判断当前fiber的类型是ReactElement还是HostText
 		if (typeof element === 'object' && element !== null) {
 			switch (element.$$typeof) {
 				case REACT_ELEMENT_TYPE:
@@ -239,6 +229,18 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 					return createFiberFromElement(element);
 			}
 		}
+		// HostText
+		if (typeof element === 'string' || typeof element === 'number') {
+			if (before) {
+				if (before.tag === HostText) {
+					existingChildren.delete(keyToUse);
+					return useFiber(before, { content: element + '' });
+				}
+			}
+			return new FiberNode(HostText, { content: element + '' }, null);
+		}
+
+		
 
 		if (Array.isArray(element)) {
 			return updateFragment(
@@ -286,7 +288,6 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 					break;
 			}
 		}
-
 		// HostText
 		if (typeof newChild === 'string' || typeof newChild === 'number') {
 			return placeSingleChild(

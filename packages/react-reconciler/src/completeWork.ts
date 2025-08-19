@@ -1,5 +1,5 @@
 import { FiberNode } from './fiber';
-import { HostComponent, HostRoot, HostText,FunctionComponent } from './workTags';
+import { HostComponent,Fragment,HostRoot, HostText,FunctionComponent } from './workTags';
 import { createInstance,appendInitialChild, Container, createTextInstance } from 'hostConfig';
 import { NoFlags,Update } from './fiberFlags';
 import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
@@ -47,9 +47,8 @@ export const completeWork = (wip: FiberNode) => {
             return null;
 
         case HostRoot:
-            bubbleProperties(wip);
-            return null; 
         case FunctionComponent:
+        case Fragment:
             bubbleProperties(wip);
             return null; 
         default:
