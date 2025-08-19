@@ -47,3 +47,6 @@ export const removeChild = (child: Instance | TextInstance,container: Container)
         container.removeChild(child);
     }
 }
+export function insertChildToContainer(child: Instance,container: Container,before: Instance){
+
+}

@@ -1,4 +1,4 @@
-import { Container, appendChildToContainer, commitUpdate,removeChild } from "hostConfig";
+import { Container, appendChildToContainer, commitUpdate,removeChild, Instance, insertChildToContainer } from "hostConfig";
 import { FiberNode } from "./fiber"
 import { ChildDeletion, MutationMask, NoFlags, Placement, Update } from "./fiberFlags";
 import { HostComponent, HostRoot, FunctionComponent, HostText } from "./workTags";
@@ -105,7 +105,7 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
 
         // 只有当hostParent不为null时才执行插入操作
         if (hostParent !== null) {
-            appendPlacementNodeIntoContainer(finishedWork, hostParent); // 将节点插入到
+            InsertOrAppendPlacementNodeIntoContainer(finishedWork, hostParent); // 将节点插入到
         }
     }
 
@@ -127,21 +127,56 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
         return null; // 返回null而不是null as any
     }
 
-    function appendPlacementNodeIntoContainer(
+    function InsertOrAppendPlacementNodeIntoContainer(
         finishedWork: FiberNode,
-        hostParent: Container
+        hostParent: Container,
+        before?:Instance
     ) {
         if (finishedWork.tag === HostComponent || finishedWork.tag === HostRoot) {
-            appendChildToContainer(hostParent, finishedWork.stateNode);
+            if(before){
+                insertChildToContainer(finishedWork.stateNode,hostParent,before);
+            }else{
+                appendChildToContainer(hostParent, finishedWork.stateNode);
+            }
             return
         }
         const child = finishedWork.child; // 获取子节点
         if (child !== null) {
-            appendPlacementNodeIntoContainer(child, hostParent); // 递归处理子节点
+            InsertOrAppendPlacementNodeIntoContainer(child, hostParent); // 递归处理子节点
             let sibling = child.sibling; // 获取兄弟节点
             while (sibling !== null) {
-                appendPlacementNodeIntoContainer(sibling, hostParent); // 递归处理兄弟节点
+                InsertOrAppendPlacementNodeIntoContainer(sibling, hostParent); // 递归处理兄弟节点
                 sibling = sibling.sibling; // 获取下一个兄弟节点
+            }
+        }
+    }
+    function getHostSibling(fiber: FiberNode){
+        let node: FiberNode = fiber;
+        findSibling: while (true) {
+            while(node.sibling === null){
+                const parent = node.return;
+                if(parent === null || parent.tag === HostComponent || parent.tag === HostRoot){
+                    return null
+                }
+            }
+            if (node.sibling) {
+                node.sibling.return = node.return;
+            }
+            node = node.sibling;
+            while(node.tag !== HostText && node.tag !== HostComponent){
+                //向下遍历
+                if((node.flags & Placement) !== NoFlags){
+                    continue findSibling;
+                }
+                if(node.child === null){
+                    continue findSibling;
+                }else{
+                    node.child.return = node.child;
+                    node = node.child;
+                }
+            }
+            if((node.flags & Placement) === NoFlags){
+                return node.stateNode;
             }
         }
     }
