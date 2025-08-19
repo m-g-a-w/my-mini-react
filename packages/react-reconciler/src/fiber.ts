@@ -2,6 +2,7 @@ import {Props,Key,Ref, ReactElement} from 'shared/ReactTypes'
 import {FunctionComponent, WorkTag,HostComponent, Fragment} from './workTags'
 import {Flags,NoFlags} from './fiberFlags'
 import {Container} from 'hostConfig'
+import { Lanes, NoLanes } from './fiberLanes'
 
 export class FiberNode {
     tag: WorkTag; // Fiber的类型
@@ -52,12 +53,16 @@ export class FiberNode {
 export class FiberRootNode{
     container: Container; // 容器信息
     current: FiberNode; // 当前的Fiber节点
+    pendingLanes: Lanes; // 待处理的更新队列
+    finishedLanes: Lanes; // 已完成的更新队列
     finishedWork: FiberNode | null; // 完成的Fiber节点
     constructor(container: Container, hostRootFiber:FiberNode) {
         this.container = container; // 容器信息
         this.current = hostRootFiber; // 当前的Fiber节点
         hostRootFiber.stateNode = this;
         this.finishedWork = null; // 完成的Fiber节点，初始为null
+        this.pendingLanes = NoLanes; // 待处理的更新队列
+        this.finishedLanes = NoLanes; // 已完成的更新队列
     }
 }
 export const createWorkInProgress = (current: FiberNode, pendingProps: Props): FiberNode => {

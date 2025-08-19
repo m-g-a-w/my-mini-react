@@ -4,8 +4,13 @@ import { beginWork } from './beginWork';
 import { HostRoot } from './workTags';
 import {NoFlags,MutationMask} from './fiberFlags';
 import { commitMutationEffects } from './commitwork';
+import { Lane, mergeLanes } from './fiberLanes';
 
 let workInProgress: FiberNode | null = null;
+
+function markRootUpdated(root: FiberRootNode,lane: Lane){
+    root.pendingLanes = mergeLanes(root.pendingLanes,lane);
+}
 
 function prepareRefreshStack(root: FiberRootNode) {
     if (root.current === null) {
@@ -16,15 +21,10 @@ function prepareRefreshStack(root: FiberRootNode) {
     }
     workInProgress = createWorkInProgress(root.current,{}); // 设置当前工作中的Fiber节点
 }
-export function scheduleUpdateOnFiber(fiber: FiberNode){
+export function scheduleUpdateOnFiber(fiber: FiberNode,lane: Lane){
     //调度功能
     const root = markUpdateFromFiberToRoot(fiber); // 标记从Fiber节点到根节点的更新
-    if (root === null) {
-        if (__DEV__) {
-            console.warn('无法找到FiberRootNode');
-        }
-        return;
-    }
+    markRootUpdated(root,lane);
     renderRoot(root); // 渲染根节点
 }
 function markUpdateFromFiberToRoot(fiber: FiberNode) {
