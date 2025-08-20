@@ -8,7 +8,11 @@ import { resolvePkgPath } from '../rollup/utils';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      // 关键配置：排除 demo 文件，避免注入热更新代码导致警告
+      // 匹配 demos/test-fc 目录下的 main.tsx 文件
+      exclude: /demos\/test-fc\/main\.tsx$/
+    }),
     replace({
       __DEV__: true,
       preventAssignment: true,
