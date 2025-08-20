@@ -4,9 +4,9 @@ import internals from "shared/internals";
 import { createUpdate, createUpdateQueue, enqueueUpdate, UpdateQueue, processUpdateQueue } from "./updateQueue";
 import { Action } from "shared/ReactTypes";
 import { scheduleUpdateOnFiber } from "./workLoop";
-import { requestUpdateLane } from "./fiberLanes";
+import { requestUpdateLane,Lane,NoLane } from "./fiberLanes";
 
-
+let renderLane: Lane = NoLane;
 let currentlyRenderingFiber: FiberNode | null = null;
 let workInProgressHook: Hook | null = null;
 let currentHook: Hook | null = null;
@@ -18,9 +18,9 @@ interface Hook {
     next: Hook | null; // 链表结构的下一个hook    
 }
 
-export function renderWithHooks(wip: FiberNode) {
+export function renderWithHooks(wip: FiberNode,lane: Lane) {
     currentlyRenderingFiber = wip; // 设置当前正在渲染的fiber节点
-    
+    renderLane = lane;
     const current = wip.alternate; // 获取备用节点
     if (current !== null) {
         //update
@@ -40,6 +40,7 @@ export function renderWithHooks(wip: FiberNode) {
     currentlyRenderingFiber = null; // 清除当前渲染的fiber节点
     workInProgressHook = null;
     currentHook = null;
+    renderLane = NoLane;
     return children
 }
 
@@ -64,6 +65,7 @@ function mountState<State>(
     }
     const queue = createUpdateQueue<State>(); // 创建一个更新队列
     hook.updateQueue = queue; // 将更新队列赋值给hook
+    hook.memoizedState = memoizedState; // 设置hook的初始状态
 
     // @ts-ignore
     const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue);
@@ -73,13 +75,14 @@ function mountState<State>(
 function updateState<State>(
     initialState: (() => State) | State
 ): [State, Dispatch<State>] {
-    const hook = updateWorkInProgressHook(); // 创建一个新的hook
+    const hook = updateWorkInProgressHook(); // 获取当前hook
     //计算新state的逻辑
     const queue = hook.updateQueue as UpdateQueue<State>;
     const pending = queue.shared.pending;
     if(pending !== null) {
-        const { memoizedState } = processUpdateQueue(hook.memoizedState, pending);
+        const { memoizedState } = processUpdateQueue(hook.memoizedState, pending, renderLane);
         hook.memoizedState = memoizedState;
+        queue.shared.pending = null; // 清空已处理的更新队列
     }
     return [hook.memoizedState, queue.dispatch as Dispatch<State>];
 }

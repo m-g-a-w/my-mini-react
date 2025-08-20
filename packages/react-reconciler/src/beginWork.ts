@@ -4,19 +4,20 @@ import {processUpdateQueue} from "./updateQueue";
 import { ReactElement } from "shared/ReactTypes";
 import { reconcileChildFibers, mountChildFibers } from "./childFibers";
 import { renderWithHooks } from "./fiberHooks";
+import { Lane } from "./fiberLanes";
 
 //递归中的递阶段
-export const beginWork = (wip: FiberNode) => {
+export const beginWork = (wip: FiberNode,renderLane: Lane) => {
     //比较，返回子fiberNode
     switch(wip.tag) {
         case HostRoot:
-            return updateHostRoot(wip); // 更新根节点
+            return updateHostRoot(wip,renderLane); // 更新根节点
         case HostComponent: 
             return updateHostComponent(wip); // 更新组件节点
         case HostText: 
             return null;
         case FunctionComponent:
-            return updateFunctionComponent(wip);
+            return updateFunctionComponent(wip,renderLane);
         case Fragment:
             return updateFragment(wip);
             default:
@@ -27,17 +28,17 @@ export const beginWork = (wip: FiberNode) => {
     }
     return null
 }
-function updateFunctionComponent(wip: FiberNode) {
-    const nextChildren = renderWithHooks(wip); // 使用钩子渲染组件
+function updateFunctionComponent(wip: FiberNode,renderLane: Lane) {
+    const nextChildren = renderWithHooks(wip,renderLane); // 使用钩子渲染组件
     reconileChildren(wip, nextChildren); // 递归处理子节点
     return wip.child; // 返回子节点
 }
-function updateHostRoot(wip: FiberNode) {
+function updateHostRoot(wip: FiberNode,renderLane: Lane) {
     const baseState = wip.memoizedState; // 获取基础状态
     const updateQueue = wip.updateQueue; // 获取更新队列
     const pending = updateQueue.shared.pending; // 获取待处理的更新
     updateQueue.shared.pending = null; // 清空待处理的更新
-    const { memoizedState } = processUpdateQueue(baseState, pending); // 处理更新队列
+    const { memoizedState } = processUpdateQueue(baseState, pending, renderLane); // 处理更新队列
     wip.memoizedState = memoizedState; // 更新已处理状态
 
     const nextChildren = wip.memoizedState; // 获取待处理的子节点

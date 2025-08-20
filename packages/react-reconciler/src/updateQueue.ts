@@ -42,15 +42,32 @@ export const enqueueUpdate = <State>(
     }
     updateQueue.shared.pending = update;
 }
-export const processUpdateQueue = <State>(baseState: State, pendingUpdate: Update<State> | null):{memoizedState:State} => {
+export const processUpdateQueue = <State>(
+    baseState: State, 
+    pendingUpdate: Update<State> | null,
+    renderLane: Lane
+):{memoizedState:State} => {
     const result:ReturnType<typeof processUpdateQueue<State>> = { memoizedState: baseState }; // 初始化结果为基础状态
     if (pendingUpdate !== null) {
-        const action = pendingUpdate.action
-        if(action instanceof Function) {
-            result.memoizedState = action(baseState); // 如果action是函数，执行它并更新状态
-        }else{
-            result.memoizedState = action; // 否则直接使用action作为新的状态
-        }
+        let first = pendingUpdate.next
+        let pending = pendingUpdate.next as Update<any>;
+        do{
+            const updateLane = pending.lane;
+            if(updateLane === renderLane){
+                const action = pending.action;
+                if(action instanceof Function) {
+                    baseState = action(baseState); // 如果action是函数，执行它并更新状态
+                }else{
+                    baseState = action; // 否则直接使用action作为新的状态
+                }
+            }else{
+                if(__DEV__){
+                    console.error('不应该进入updateLane !== renderLane逻辑')
+                }
+            }
+            pending = pending.next as Update<State>;
+        }while(pending !== first)
     }
+    result.memoizedState = baseState;
     return result;
 }
