@@ -4,7 +4,9 @@ import { beginWork } from './beginWork';
 import { HostRoot } from './workTags';
 import {NoFlags,MutationMask} from './fiberFlags';
 import { commitMutationEffects } from './commitwork';
-import { Lane, mergeLanes } from './fiberLanes';
+import { Lane,NoLane,SyncLane, mergeLanes, getHighestPriorityLane } from './fiberLanes';
+import { scheduleSyncCallback,flushSyncTaskQueue } from './syncTaskQueue';
+import { scheduleMicroTask } from 'react-dom/src/hostConfig';
 
 let workInProgress: FiberNode | null = null;
 
@@ -25,7 +27,20 @@ export function scheduleUpdateOnFiber(fiber: FiberNode,lane: Lane){
     //调度功能
     const root = markUpdateFromFiberToRoot(fiber); // 标记从Fiber节点到根节点的更新
     markRootUpdated(root,lane);
-    renderRoot(root); // 渲染根节点
+    ensureRootIsScheduled(root); // 渲染根节点
+}
+function ensureRootIsScheduled(root: FiberRootNode){
+    const updateLane = getHighestPriorityLane(root.pendingLanes);
+    if(updateLane === NoLane){
+        return;
+    }
+    if(updateLane === SyncLane){
+        if(__DEV__){
+            console.log(`在微任务中调度，优先级：${updateLane}`);
+        }
+        scheduleSyncCallback(performSyncWorkOnRoot.bind(null,root,updateLane));
+        scheduleMicroTask(flushSyncTaskQueue);
+    }
 }
 function markUpdateFromFiberToRoot(fiber: FiberNode) {
     let node = fiber;
@@ -40,9 +55,13 @@ function markUpdateFromFiberToRoot(fiber: FiberNode) {
     return null; // 如果没有找到根节点，返回null
 }
 
-function renderRoot(root: FiberRootNode) {
+function performSyncWorkOnRoot(root: FiberRootNode,lane: Lane) {
+    const nextLane = getHighestPriorityLane(root.pendingLanes);
+    if(nextLane !== SyncLane){
+        ensureRootIsScheduled(root);
+        return;
+    }
     prepareRefreshStack(root)
-    
     if (workInProgress === null) {
         if (__DEV__) {
             console.warn('workInProgress 为 null，跳过渲染');
