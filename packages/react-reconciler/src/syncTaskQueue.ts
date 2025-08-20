@@ -20,6 +20,7 @@ export function flushSyncTaskQueue(){
             }
         }finally{
             isFlushingSyncTaskQueue = false;
+            syncTaskQueue = null;
         }
     }
 }

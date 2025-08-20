@@ -1,10 +1,12 @@
 import { Dispatch,Dispatcher } from "react/src/currentDispatcher";
 import { FiberNode } from "./fiber";
+import { Flags, PassiveEffect, HookHasEffect } from "./fiberFlags";
 import internals from "shared/internals";
 import { createUpdate, createUpdateQueue, enqueueUpdate, UpdateQueue, processUpdateQueue } from "./updateQueue";
 import { Action } from "shared/ReactTypes";
 import { scheduleUpdateOnFiber } from "./workLoop";
 import { requestUpdateLane,Lane,NoLane } from "./fiberLanes";
+
 
 let renderLane: Lane = NoLane;
 let currentlyRenderingFiber: FiberNode | null = null;
@@ -12,11 +14,25 @@ let workInProgressHook: Hook | null = null;
 let currentHook: Hook | null = null;
 const { currentDispatcher } = internals; // 获取当前调度器
 
+export interface FCUpdateQueue<State> extends UpdateQueue<State>{
+    lastEffect: Effect | null;
+}
+
 interface Hook {
     memoizedState: any; // 存储hook的状态
     updateQueue: any; // 存储更新队列
     next: Hook | null; // 链表结构的下一个hook    
 }
+export interface Effect {
+    tag: Flags;
+    create: EffectCallback | void;
+    destory: EffectCallback | void;
+    deps: EffectDeps,
+    next: Effect | null
+
+}
+type EffectCallback = () => void | null;
+type EffectDeps = any[] | null;
 
 export function renderWithHooks(wip: FiberNode,lane: Lane) {
     currentlyRenderingFiber = wip; // 设置当前正在渲染的fiber节点
@@ -45,11 +61,60 @@ export function renderWithHooks(wip: FiberNode,lane: Lane) {
 }
 
 const HooksDispatcherOnMount: Dispatcher = {
-    useState: mountState
+    useState: mountState,
+    useEffect: mountEffect
 }
 const HooksDispatcherUpdate: Dispatcher = {
-    useState: updateState
+    useState: updateState,
+    useEffect: mountEffect
 }
+function mountEffect(create: EffectCallback | void,deps: EffectDeps | void){
+    const hook = mountWorkInProgressHook();
+    const nextDeps = deps === undefined ? null : deps;
+    (currentlyRenderingFiber as FiberNode).flags |= PassiveEffect
+
+    hook.memoizedState = pushEffect(PassiveEffect | HookHasEffect ,create,undefined,nextDeps);
+}
+function pushEffect(hookFlags: Flags,
+    create: EffectCallback | void,
+    destory: EffectCallback | void,
+    deps: EffectDeps): Effect{
+    const effect: Effect = {
+        tag: hookFlags,
+        create,
+        destory,
+        deps,
+        next:null
+    }
+    const fiber = currentlyRenderingFiber as FiberNode;
+    const updateQueue = fiber.updateQueue as FCUpdateQueue<any>;
+    if(updateQueue === null){
+        const updateQueue = createFCUpdateQueue();
+        fiber.updateQueue = updateQueue;
+        effect.next = effect;
+        updateQueue.lastEffect = effect;
+    }
+    else{
+        //插入effect
+        const lastEffect = updateQueue.lastEffect;
+        if(lastEffect === null){
+            effect.next = effect;
+            updateQueue.lastEffect = effect;
+        }else{
+            const firstEffect = updateQueue.lastEffect;
+            lastEffect.next = effect;
+            effect.next = firstEffect;
+            updateQueue.lastEffect = effect;
+        }
+    }
+    return effect;
+}
+function createFCUpdateQueue<State>(){
+    const updateQueue = createUpdateQueue<State>() as FCUpdateQueue<State>
+    updateQueue.lastEffect = null;
+    return updateQueue;
+}
+
 
 function mountState<State>(
     initialState: (() => State) | State
