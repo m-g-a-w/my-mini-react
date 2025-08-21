@@ -1,16 +1,23 @@
 import { completeWork } from './completeWork';
-import { createWorkInProgress, FiberNode,FiberRootNode } from './fiber';
+import { createWorkInProgress, FiberNode,FiberRootNode, PendingPassiveEffects } from './fiber';
 import { beginWork } from './beginWork';
 import { HostRoot } from './workTags';
-import {NoFlags,MutationMask} from './fiberFlags';
-import { commitMutationEffects } from './commitwork';
+import {NoFlags,MutationMask, PassiveMask, Flags,HookHasEffect, PassiveEffect} from './fiberFlags';
+import { commitMutationEffects, commitLayoutEffects } from './commitwork';
 import { Lane,NoLane,SyncLane, mergeLanes, getHighestPriorityLane, markRootFinished } from './fiberLanes';
-
 import { scheduleSyncCallback,flushSyncTaskQueue } from './syncTaskQueue';
 import { scheduleMicroTask } from 'react-dom/src/hostConfig';
+import {
+    unstable_scheduleCallback as scheduleCallback,
+    unstable_NormalPriority as NormalPriority,
+ } from 'scheduler';
+import { Effect } from './fiberHooks';
+import { commitHookEffectListUnmount, commitHookEffectListDestroy, commitHookEffectListCreate } from './commitwork';
+
 
 let workInProgress: FiberNode | null = null;
 let wipRootRenderLane: Lane = NoLane;
+let rootDoesHasPassiveEffect: Boolean = false;
 
 function markRootUpdated(root: FiberRootNode,lane: Lane){
     root.pendingLanes = mergeLanes(root.pendingLanes,lane);
@@ -90,7 +97,7 @@ function performSyncWorkOnRoot(root: FiberRootNode,lane: Lane) {
 }
 
 function commitRoot(root: FiberRootNode) {
-    const finishedWork = root.finishedWork; // 获取完成的工作节点
+    const finishedWork = root.finishedWork;
     if(finishedWork === null) {
         return; // 如果没有完成的工作节点，直接返回
     }
@@ -110,22 +117,36 @@ function commitRoot(root: FiberRootNode) {
     if (lane !== NoLane) {
         markRootFinished(root, lane);
     }
-    
+
+    if(
+        (finishedWork.flags & PassiveMask) !== NoFlags 
+        || (finishedWork.subtreeFlags & PassiveMask) !== NoFlags
+    ){
+        if(!rootDoesHasPassiveEffect){
+            rootDoesHasPassiveEffect = true;
+            //调度副作用
+            scheduleCallback(NormalPriority,()=>{
+                //执行副作用
+                flushPassiveEffects(root.pendingPassiveEffects)
+                return
+            })
+        }
+    }
     //判断是否存在3个子阶段需要执行的操作
-    const subtreeFlags = (finishedWork.subtreeFlags & (MutationMask)) !== NoFlags; // 检查子树标记是否包含变更标记
-    const rootHasEffect = (finishedWork.flags & (MutationMask)) !== NoFlags; // 检查根节点是否有副作用标记
+    const subtreeFlags = (finishedWork.subtreeFlags & (MutationMask | PassiveMask)) !== NoFlags; // 检查子树标记是否包含变更标记
+    const rootHasEffect = (finishedWork.flags & (MutationMask | PassiveMask)) !== NoFlags; // 检查根节点是否有副作用标记
     if(subtreeFlags || rootHasEffect) {
         //beforeMutation
         //mutation Placement
-        commitMutationEffects(finishedWork);
-        
+        commitMutationEffects(finishedWork,root);
         root.current = finishedWork; // 更新当前节点为完成的工作节点
-        
         //layout
+        commitLayoutEffects(finishedWork, root);
     }else{
         root.current = finishedWork;
     }
-
+    rootDoesHasPassiveEffect = false;
+    ensureRootIsScheduled(root);
 }
 
 function workLoop() {
@@ -144,6 +165,27 @@ function performUnitOfWork(fiber: FiberNode) {
         workInProgress = next; // 设置下一个工作单元为当前工作中的Fiber节点
     }
 }
+function flushPassiveEffects(pendingPassiveEffects: PendingPassiveEffects){
+    let didFlushPassiveEffect = false;
+    pendingPassiveEffects.unmount.forEach((effect) => {
+        didFlushPassiveEffect = true;
+        commitHookEffectListUnmount(PassiveEffect, effect);
+    });
+    pendingPassiveEffects.unmount = [];
+
+    pendingPassiveEffects.update.forEach((effect) => {
+        didFlushPassiveEffect = true;
+        commitHookEffectListDestroy(PassiveEffect | HookHasEffect, effect);
+    });
+    pendingPassiveEffects.update.forEach((effect) => {
+        didFlushPassiveEffect = true;
+        commitHookEffectListCreate(PassiveEffect | HookHasEffect, effect);
+    });
+    pendingPassiveEffects.update = [];
+    flushSyncTaskQueue();
+    return didFlushPassiveEffect;
+}
+
 function completeUnitOfWork(fiber: FiberNode) {
     let node :FiberNode | null = fiber;
     do {

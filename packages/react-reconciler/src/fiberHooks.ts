@@ -26,7 +26,7 @@ interface Hook {
 export interface Effect {
     tag: Flags;
     create: EffectCallback | void;
-    destory: EffectCallback | void;
+    destroy: EffectCallback | void;
     deps: EffectDeps,
     next: Effect | null
 
@@ -37,16 +37,18 @@ type EffectDeps = any[] | null;
 export function renderWithHooks(wip: FiberNode,lane: Lane) {
     currentlyRenderingFiber = wip; // 设置当前正在渲染的fiber节点
     renderLane = lane;
+    
+    // 重置 hook 相关状态，确保每次渲染都从干净的状态开始
+    wip.memoizedState = null;
+    wip.updateQueue = null;
+    
     const current = wip.alternate; // 获取备用节点
     if (current !== null) {
         //update
         currentDispatcher.current = HooksDispatcherUpdate
-        // 在更新时，保持之前的hook状态
-        wip.memoizedState = current.memoizedState;
     } else {
-        //mmount
+        //mount
         currentDispatcher.current = HooksDispatcherOnMount
-        wip.memoizedState = null; // 初始化memoizedState为null
     }
     const Component = wip.type; // 获取组件类型
     const props = wip.pendingProps; // 获取待处理的属性
@@ -66,8 +68,9 @@ const HooksDispatcherOnMount: Dispatcher = {
 }
 const HooksDispatcherUpdate: Dispatcher = {
     useState: updateState,
-    useEffect: mountEffect
+    useEffect: updateEffect
 }
+
 function mountEffect(create: EffectCallback | void,deps: EffectDeps | void){
     const hook = mountWorkInProgressHook();
     const nextDeps = deps === undefined ? null : deps;
@@ -75,14 +78,59 @@ function mountEffect(create: EffectCallback | void,deps: EffectDeps | void){
 
     hook.memoizedState = pushEffect(PassiveEffect | HookHasEffect ,create,undefined,nextDeps);
 }
+
+function updateEffect(create: EffectCallback | void,deps: EffectDeps | void){
+    const hook = updateWorkInProgressHook();
+    const nextDeps = deps === undefined ? null : deps;
+    let destroy: EffectCallback | void = undefined;
+    
+    if(currentHook !== null){
+        const prevEffect = currentHook.memoizedState as Effect;
+        destroy = prevEffect.destroy;
+        
+        if(nextDeps !== null){
+            //浅比较依赖
+            const prevDeps = prevEffect.deps;
+            if(areHookInputsEqual(nextDeps,prevDeps)){
+                hook.memoizedState = pushEffect(PassiveEffect,create,destroy,nextDeps);
+                return;
+            }
+        }
+        //浅比较 不相等
+        (currentlyRenderingFiber as FiberNode).flags |= PassiveEffect;
+        hook.memoizedState = pushEffect(
+            PassiveEffect | HookHasEffect ,
+            create,
+            destroy,
+            nextDeps
+        );
+    }
+}
+
+function areHookInputsEqual(nextDeps: EffectDeps,prevDeps: EffectDeps){
+    if(prevDeps === null || nextDeps === null){
+        return false;
+    }
+    if(prevDeps.length === 0 && nextDeps.length === 0){
+        return true;
+    }
+    for(let i = 0; i < prevDeps.length && i < nextDeps.length; i++){
+        if(Object.is(prevDeps[i],nextDeps[i])){
+            continue
+        }
+        return false;
+    }
+    return true
+}
+
 function pushEffect(hookFlags: Flags,
     create: EffectCallback | void,
-    destory: EffectCallback | void,
+    destroy: EffectCallback | void,
     deps: EffectDeps): Effect{
     const effect: Effect = {
         tag: hookFlags,
         create,
-        destory,
+        destroy,
         deps,
         next:null
     }
@@ -101,7 +149,7 @@ function pushEffect(hookFlags: Flags,
             effect.next = effect;
             updateQueue.lastEffect = effect;
         }else{
-            const firstEffect = updateQueue.lastEffect;
+            const firstEffect = lastEffect.next;
             lastEffect.next = effect;
             effect.next = firstEffect;
             updateQueue.lastEffect = effect;
@@ -109,6 +157,7 @@ function pushEffect(hookFlags: Flags,
     }
     return effect;
 }
+
 function createFCUpdateQueue<State>(){
     const updateQueue = createUpdateQueue<State>() as FCUpdateQueue<State>
     updateQueue.lastEffect = null;
@@ -154,25 +203,32 @@ function updateState<State>(
 function updateWorkInProgressHook(): Hook {
     let nextCurrentHook: Hook | null = null;
     if (currentHook === null) {
+        // 第一次调用 updateWorkInProgressHook，从 current fiber 获取第一个 hook
         const current = currentlyRenderingFiber?.alternate;
-        if (current !== null) {
-            nextCurrentHook = current?.memoizedState;
+        if (current !== null && current !== undefined) {
+            nextCurrentHook = current.memoizedState;
         }
         else {
             nextCurrentHook = null;
         }
     } else {
+        // 后续调用，获取下一个 hook
         nextCurrentHook = currentHook.next;
     }
+    
+    // 如果 nextCurrentHook 为 null，说明 hook 数量不匹配
+    // 这在 React 中是不允许的，应该抛出错误
     if (nextCurrentHook === null) {
         throw new Error(`当前组件: ${currentlyRenderingFiber?.type} 在更新时hook比上一次多`);
     }
+    
     currentHook = nextCurrentHook as Hook;
     const newHook: Hook = {
         memoizedState: currentHook.memoizedState,
         updateQueue: currentHook.updateQueue,
         next: null
     }
+    
     if (workInProgressHook === null) {
         if (currentlyRenderingFiber === null) {
             throw new Error('hook只能在函数组件中执行');

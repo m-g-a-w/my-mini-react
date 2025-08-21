@@ -30,7 +30,7 @@ export const beginWork = (wip: FiberNode,renderLane: Lane) => {
 }
 function updateFunctionComponent(wip: FiberNode,renderLane: Lane) {
     const nextChildren = renderWithHooks(wip,renderLane); // 使用钩子渲染组件
-    reconileChildren(wip, nextChildren); // 递归处理子节点
+    reconcileChildren(wip, nextChildren); // 递归处理子节点
     return wip.child; // 返回子节点
 }
 function updateHostRoot(wip: FiberNode,renderLane: Lane) {
@@ -42,21 +42,21 @@ function updateHostRoot(wip: FiberNode,renderLane: Lane) {
     wip.memoizedState = memoizedState; // 更新已处理状态
 
     const nextChildren = wip.memoizedState; // 获取待处理的子节点
-    reconileChildren(wip, nextChildren); // 递归处理子节点
+    reconcileChildren(wip, nextChildren); // 递归处理子节点
     return wip.child; // 返回子节点
 }
 function updateFragment(wip: FiberNode) {
     const nextChildren = wip.pendingProps; // 获取待处理的子节点
-    reconileChildren(wip, nextChildren); // 递归处理子节点
+    reconcileChildren(wip, nextChildren); // 递归处理子节点
     return wip.child; // 返回子节点
 }
 function updateHostComponent(wip: FiberNode) {
     const nextProps = wip.pendingProps; // 获取待处理的属性
     const nextChildren = nextProps.children; // 获取待处理的属性
-    reconileChildren(wip, nextChildren); // 递归处理子节点
+    reconcileChildren(wip, nextChildren); // 递归处理子节点
     return wip.child; // 返回子节点
 }
-function reconileChildren(wip: FiberNode, children?: ReactElement) {
+function reconcileChildren(wip: FiberNode, children?: ReactElement) {
     const current = wip.alternate; // 获取备用节点
     if(current !== null) {
         //update
