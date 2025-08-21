@@ -1,9 +1,9 @@
-import {Props,Key,Ref, ReactElement} from 'shared/ReactTypes'
-import {FunctionComponent, WorkTag,HostComponent, Fragment} from './workTags'
-import {Flags,NoFlags} from './fiberFlags'
-import {Container} from 'hostConfig'
-import { Lanes, NoLanes, Lane,NoLane } from './fiberLanes'
-import { Effect } from './fiberHooks'
+import { Props, Key, Ref, ReactElement } from 'shared/ReactTypes';
+import { WorkTag, FunctionComponent, HostComponent, Fragment } from './workTags';
+import { Flags, NoFlags } from './fiberFlags';
+import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
+import { Effect } from './fiberHooks';
+import { Container } from 'hostConfig';
 
 export class FiberNode {
     tag: WorkTag; // Fiber的类型

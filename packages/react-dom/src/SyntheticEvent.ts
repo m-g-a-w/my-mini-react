@@ -1,5 +1,5 @@
 import { Props } from 'shared/ReactTypes'
-import { Container } from 'hostConfig'
+import { Container } from './hostConfig'
 
 const validateEventTypeList = ['click']
 export const elementPropsKey = '__props'

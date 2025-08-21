@@ -1,10 +1,10 @@
-import {Container} from 'hostConfig'
 import { HostRoot } from './workTags';
 import { FiberNode, FiberRootNode } from './fiber';
 import { createUpdate, createUpdateQueue, enqueueUpdate, UpdateQueue } from './updateQueue';
 import type{ ReactElement } from 'shared/ReactTypes';
 import {scheduleUpdateOnFiber} from './workLoop'; 
 import { requestUpdateLane } from './fiberLanes';
+import { Container } from 'hostConfig';
 
 export function createContainer(container: Container){
     const hostRootFiber = new FiberNode(HostRoot, {}, null); // 创建根Fiber节点

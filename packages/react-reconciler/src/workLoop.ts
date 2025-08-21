@@ -6,7 +6,7 @@ import {NoFlags,MutationMask, PassiveMask, Flags,HookHasEffect, PassiveEffect} f
 import { commitMutationEffects, commitLayoutEffects } from './commitwork';
 import { Lane,NoLane,SyncLane, mergeLanes, getHighestPriorityLane, markRootFinished } from './fiberLanes';
 import { scheduleSyncCallback,flushSyncTaskQueue } from './syncTaskQueue';
-import { scheduleMicroTask } from 'react-dom/src/hostConfig';
+import { scheduleMicroTask } from 'hostConfig';
 import {
     unstable_scheduleCallback as scheduleCallback,
     unstable_NormalPriority as NormalPriority,
