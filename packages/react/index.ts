@@ -4,7 +4,7 @@ import { jsx, isValidElement as  isValidElementFn} from './src/jsx';
 export const version = '0.0.0';
 export const createElement = jsx;
 
-export const useState: Dispatcher['useState'] = (initialState :any) => {
+export const useState: Dispatcher['useState'] = (initialState: any) => {
     const dispatcher = resolveDispatcher();
     return dispatcher.useState(initialState);
 }
