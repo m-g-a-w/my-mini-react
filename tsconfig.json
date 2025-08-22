@@ -1,10 +1,11 @@
 {
     "compileOnSave": true,
-    "include": ["./packages/**/*"],
+    "include": ["./packages/**/*", "./demos/**/*"],
     "compilerOptions": {
         "target": "ESNext",
         "useDefineForClassFields": true,
         "module": "ESNext",
+        "jsx": "react-jsx",
         "lib": ["ESNext", "DOM"],
         "moduleResolution": "Node",
         "strict": true,
@@ -21,6 +22,12 @@
         "paths":{
             "hostConfig":[
                 "./react-dom/src/hostConfig.ts"
+            ],
+            "react/jsx-runtime": [
+                "./react/jsx-runtime"
+            ],
+            "react/jsx-dev-runtime": [
+                "./react/jsx-dev-runtime"
             ]
         }
     }

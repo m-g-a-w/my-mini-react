@@ -9,7 +9,9 @@ import { resolvePkgPath } from '../rollup/utils';
 export default defineConfig({
   plugins: [
     react({
-      // 移除排除配置，让 Vite 正确处理 JSX
+      // 配置 JSX 运行时
+      jsxRuntime: 'automatic',
+      jsxImportSource: 'react'
     }),
     replace({
       __DEV__: true,

@@ -1,8 +1,9 @@
 import currentDispatcher, { Dispatcher, resolveDispatcher } from './src/currentDispatcher';
-import { jsx, isValidElement as  isValidElementFn} from './src/jsx';
+import { jsx, jsxDEV, jsxs, isValidElement as  isValidElementFn} from './src/jsx';
 
 export const version = '0.0.0';
 export const createElement = jsx;
+export { jsxDEV, jsxs };
 
 export const useState: Dispatcher['useState'] = (initialState: any) => {
     const dispatcher = resolveDispatcher();

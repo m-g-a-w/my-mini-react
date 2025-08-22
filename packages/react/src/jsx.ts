@@ -80,3 +80,6 @@ export const jsxDEV = (type: ElementType,config: any,...maybeChildren: any): Rea
 }
 
 export const Fragment = REACT_FRAGMENT_TYPE
+
+// Vite 需要 jsxs 导出
+export const jsxs = jsx;
