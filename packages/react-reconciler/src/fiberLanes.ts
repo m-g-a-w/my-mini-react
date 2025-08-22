@@ -32,7 +32,6 @@ export function isSubsetOfLanes(set: Lanes, subset: Lane) {
 
 export function markRootFinished(root: FiberRootNode, lane: Lane) {
     root.pendingLanes &= ~lane;
-    
     root.suspendedLanes = NoLanes;
     root.pingedLanes = NoLanes;
 }

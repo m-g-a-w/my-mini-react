@@ -42,7 +42,9 @@ function updateHostRoot(wip: FiberNode,renderLane: Lane) {
     wip.memoizedState = memoizedState; // 更新已处理状态
 
     const nextChildren = wip.memoizedState; // 获取待处理的子节点
-    reconcileChildren(wip, nextChildren); // 递归处理子节点
+    // 确保 nextChildren 不为 null，如果为 null 则使用空数组
+    const children = nextChildren !== null ? nextChildren : [];
+    reconcileChildren(wip, children); // 递归处理子节点
     return wip.child; // 返回子节点
 }
 function updateFragment(wip: FiberNode) {

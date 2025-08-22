@@ -23,6 +23,10 @@ export function updateFiberProps(node: DOMElement, props: Props) {
     node[elementPropsKey] = props
 }
 export function initEvent(container: Container, eventType: string) {
+    // 添加容器有效性检查
+    if (!container || !(container instanceof Element)) {
+        return;
+    }
     if (!validateEventTypeList.includes(eventType)) {
         console.warn("当前不支持的事件类型", eventType)
         return

@@ -1,34 +1,15 @@
-import {useState, useEffect} from 'react'
-import ReactDOM from 'react-noop-renderer'
+import { createElement, useState } from '../../packages/react'
+import { createRoot } from '../../packages/react-dom/src/root'
 
-function App() {
-  const [num,updateNum] = useState(0)
-  // useEffect(() => {
-  //   console.log('app mount')
-  // },[])
-  // useEffect(() => {
-  //   console.log('num change create',num)
-  //   return()=>{
-  //     console.log('num change destroy',num)
-  //   }
-  // },[num])
+function App(props: any) {
+  const [num, updateNum] = useState(50)
   return (
-    <>
-      <div>hello world</div>
-      <Child/>
-    </>
+    <ul>
+      {new Array(num).fill(0).map((_, index) => (
+        <li key={index}>{index + 1}</li>
+      ))}
+    </ul>
   )
 }
-function Child(){
-  useEffect(() => {
-    console.log('child mount')
-    return()=>{
-      console.log('child unmount')
-    }
-  },[])
-  return 'i am child'
-}
-const root =  ReactDOM.createRoot()
-root.render(<App />)
-
-window.root = root
+const root = createRoot(document.getElementById('root'))
+root.render(createElement(App, {}))

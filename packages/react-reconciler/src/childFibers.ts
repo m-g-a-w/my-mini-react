@@ -109,7 +109,9 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 	}
 
 	function placeSingleChild(fiber: FiberNode) {
-		if (shouldTrackEffects && fiber.alternate === null) {
+		// 在首次挂载时，总是需要设置 Placement 标志
+		// 即使 shouldTrackEffects 为 false，也要确保 DOM 元素被插入
+		if (fiber.alternate === null) {
 			fiber.flags |= Placement;
 		}
 		return fiber;

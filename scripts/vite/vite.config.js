@@ -9,9 +9,7 @@ import { resolvePkgPath } from '../rollup/utils';
 export default defineConfig({
   plugins: [
     react({
-      // 关键配置：排除 demo 文件，避免注入热更新代码导致警告
-      // 匹配 demos/test-fc 目录下的 main.tsx 文件
-      exclude: /demos\/test-fc\/main\.tsx$/
+      // 移除排除配置，让 Vite 正确处理 JSX
     }),
     replace({
       __DEV__: true,
@@ -35,7 +33,7 @@ export default defineConfig({
       {
         find:'hostConfig',
         replacement: path.resolve(
-          resolvePkgPath('react-noop-renderer'),
+          resolvePkgPath('react-dom'),
           './src/hostConfig.ts')
       },
       {

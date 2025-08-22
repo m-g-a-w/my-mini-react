@@ -1,4 +1,5 @@
 import { Dispatch,Dispatcher } from "react/src/currentDispatcher";
+import currentDispatcher from "react/src/currentDispatcher";
 import { FiberNode } from "./fiber";
 import { Flags, PassiveEffect, HookHasEffect } from "./fiberFlags";
 import internals from "shared/internals";
@@ -6,13 +7,14 @@ import { createUpdate, createUpdateQueue, enqueueUpdate, UpdateQueue, processUpd
 import { Action } from "shared/ReactTypes";
 import { scheduleUpdateOnFiber } from "./workLoop";
 import { requestUpdateLane,Lane,NoLane } from "./fiberLanes";
-
+import { Update } from "./updateQueue";
 
 let renderLane: Lane = NoLane;
 let currentlyRenderingFiber: FiberNode | null = null;
 let workInProgressHook: Hook | null = null;
 let currentHook: Hook | null = null;
-const { currentDispatcher } = internals; // 获取当前调度器
+// 直接使用 react 包中的 currentDispatcher，确保实例一致
+// const { currentDispatcher } = internals; // 获取当前调度器
 
 export interface FCUpdateQueue<State> extends UpdateQueue<State>{
     lastEffect: Effect | null;
@@ -21,7 +23,9 @@ export interface FCUpdateQueue<State> extends UpdateQueue<State>{
 interface Hook {
     memoizedState: any; // 存储hook的状态
     updateQueue: any; // 存储更新队列
-    next: Hook | null; // 链表结构的下一个hook    
+    next: Hook | null; // 链表结构的下一个hook  
+    baseState: any; // 存储baseState
+    baseQueue: Update<any> | null;
 }
 export interface Effect {
     tag: Flags;
@@ -43,17 +47,49 @@ export function renderWithHooks(wip: FiberNode,lane: Lane) {
     wip.updateQueue = null;
     
     const current = wip.alternate; // 获取备用节点
+    let dispatcher;
     if (current !== null) {
         //update
-        currentDispatcher.current = HooksDispatcherUpdate
+        dispatcher = HooksDispatcherUpdate;
+        currentDispatcher.current = dispatcher;
     } else {
         //mount
-        currentDispatcher.current = HooksDispatcherOnMount
+        dispatcher = HooksDispatcherOnMount;
+        currentDispatcher.current = dispatcher;
     }
+    
+    // 添加保护机制：在组件执行期间，定期检查 currentDispatcher.current 是否被重置
+    const originalDispatcher = currentDispatcher.current;
+    const checkDispatcher = () => {
+        if (currentDispatcher.current !== originalDispatcher) {
+            // 恢复正确的 dispatcher
+            currentDispatcher.current = originalDispatcher;
+        }
+    };
+    
     const Component = wip.type; // 获取组件类型
     const props = wip.pendingProps; // 获取待处理的属性
-    const children = Component(props); // 调用组件函数获取子节点
-
+    
+    // 在组件执行前检查
+    checkDispatcher();
+    
+    // 临时保存当前的 currentDispatcher.current
+    const savedDispatcher = currentDispatcher.current;
+    
+    // 确保在组件执行期间，currentDispatcher.current 不会被重置
+    const safeComponentCall = () => {
+        // 在每次 hook 调用前，确保 currentDispatcher.current 是正确的
+        if (currentDispatcher.current !== savedDispatcher) {
+            currentDispatcher.current = savedDispatcher;
+        }
+        return Component(props);
+    };
+    
+    const children = safeComponentCall(); // 调用组件函数获取子节点
+    
+    // 在组件执行后检查
+    checkDispatcher();
+    
     //重置操作
     currentlyRenderingFiber = null; // 清除当前渲染的fiber节点
     workInProgressHook = null;
@@ -192,10 +228,35 @@ function updateState<State>(
     const hook = updateWorkInProgressHook(); // 获取当前hook
     //计算新state的逻辑
     const queue = hook.updateQueue as UpdateQueue<State>;
+    const baseState= hook.baseState;
+
     const pending = queue.shared.pending;
+    const current = currentHook as Hook
+    let baseQueue = current.baseQueue;
+    //pending baseQueue update保存在current中
+
+    
     if(pending !== null) {
-        const { memoizedState } = processUpdateQueue(hook.memoizedState, pending, renderLane);
-        hook.memoizedState = memoizedState;
+        if(baseQueue !== null){
+            const baseFirst = baseQueue.next;
+            let pendingFirst = pending.next;
+
+            baseQueue.next = pendingFirst;
+            pending.next = baseFirst;
+        }
+        baseQueue = pending;
+        current.baseQueue = pending;
+        queue.shared.pending = null;
+        if(baseQueue !== null){
+            const { memoizedState,baseQueue: newBaseQueue, baseState: newBaseState}
+             = processUpdateQueue(hook.memoizedState, pending, renderLane);
+            hook.memoizedState = memoizedState;
+            hook.baseState = newBaseState;
+            hook.baseQueue = newBaseQueue;
+            return [memoizedState, queue.dispatch as Dispatch<State>];
+        }
+
+        // Remove this line since memoizedState is not defined in this scope
         queue.shared.pending = null; // 清空已处理的更新队列
     }
     return [hook.memoizedState, queue.dispatch as Dispatch<State>];
@@ -226,7 +287,9 @@ function updateWorkInProgressHook(): Hook {
     const newHook: Hook = {
         memoizedState: currentHook.memoizedState,
         updateQueue: currentHook.updateQueue,
-        next: null
+        next: null,
+        baseState: currentHook.baseState,
+        baseQueue: currentHook.baseQueue
     }
     
     if (workInProgressHook === null) {
@@ -256,7 +319,9 @@ function mountWorkInProgressHook(): Hook {
     const hook: Hook = {
         memoizedState: null, // 初始化hook的状态为null
         updateQueue: null, // 初始化更新队列为null
-        next: null // 链表结构的下一个hook
+        next: null, // 链表结构的下一个hook
+        baseState: null,
+        baseQueue: null
     };
 
     if (workInProgressHook === null) {
