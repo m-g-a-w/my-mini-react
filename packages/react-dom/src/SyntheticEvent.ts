@@ -1,5 +1,6 @@
 import { Props } from 'shared/ReactTypes'
 import { Container } from './hostConfig'
+import { unstable_ImmediatePriority, unstable_UserBlockingPriority, unstable_NormalPriority, unstable_runWithPriority } from 'scheduler'
 
 const validateEventTypeList = ['click']
 export const elementPropsKey = '__props'
@@ -10,7 +11,7 @@ interface Paths {
     capture: EventCallback[]
     bubble: EventCallback[]
 }
-interface SyntheticEvent extends Event{
+interface SyntheticEvent extends Event {
     __stopPropagation: boolean
 }
 
@@ -21,16 +22,16 @@ export interface DOMElement extends Element {
 export function updateFiberProps(node: DOMElement, props: Props) {
     node[elementPropsKey] = props
 }
-export function initEvent(container: Container,eventType: string) {
-    if(!validateEventTypeList.includes(eventType)){
-        console.warn("当前不支持的事件类型",eventType)
+export function initEvent(container: Container, eventType: string) {
+    if (!validateEventTypeList.includes(eventType)) {
+        console.warn("当前不支持的事件类型", eventType)
         return
     }
-    if(__DEV__){
-        console.log("初始化事件",eventType)
+    if (__DEV__) {
+        console.log("初始化事件", eventType)
     }
-    container.addEventListener(eventType,(e) => {
-        dispatchEvent(container,eventType,e)
+    container.addEventListener(eventType, (e) => {
+        dispatchEvent(container, eventType, e)
     })
 }
 
@@ -40,64 +41,66 @@ function createSyntheticEvent(event: Event) {
     const originalStopPropagation = event.stopPropagation
     syntheticEvent.stopPropagation = () => {
         syntheticEvent.__stopPropagation = true
-        if(originalStopPropagation){
+        if (originalStopPropagation) {
             originalStopPropagation()
         }
     }
     return syntheticEvent
 }
 
-function dispatchEvent(container: Container,eventType: string,event: Event) {
+function dispatchEvent(container: Container, eventType: string, event: Event) {
     const targetElement = event.target
-    if(targetElement === null){
-        console.warn("事件不存在target",event)
+    if (targetElement === null) {
+        console.warn("事件不存在target", event)
         return
     }
     //1.获取事件
-    const {bubble,capture} = collectPaths(targetElement as DOMElement,container,eventType)
-    
+    const { bubble, capture } = collectPaths(targetElement as DOMElement, container, eventType)
+
     //2.构造合成时间
     const se = createSyntheticEvent(event)
     //3.遍历capture
-    triggerEventFolw(capture,se)
-    if(!se.__stopPropagation){
+    triggerEventFolw(capture, se)
+    if (!se.__stopPropagation) {
         //4.遍历bubble
-        triggerEventFolw(bubble,se)
+        triggerEventFolw(bubble, se)
     }
-}   
-function getEventCallbackNameFromEventType(eventType: string): string[] | undefined{
+}
+function getEventCallbackNameFromEventType(eventType: string): string[] | undefined {
     return {
-        click: ['onClickCapture','onClick']
+        click: ['onClickCapture', 'onClick']
     }[eventType]
 }
-function triggerEventFolw(path: EventCallback[],se: SyntheticEvent) {
-    for(let i = 0;i < path.length;i++){
+function triggerEventFolw(path: EventCallback[], se: SyntheticEvent) {
+    for (let i = 0; i < path.length; i++) {
         const callback = path[i]
-        callback.call(null,se)
-        if(se.__stopPropagation){
+        unstable_runWithPriority(eventTypeToSchedulerPriority(se.type),() => {
+            callback.call(null, se)
+        })
+        if (se.__stopPropagation) {
             break//阻止事件继续传播
         }
     }
 }
 
 
-function collectPaths(targetElement: DOMElement,container: Container,eventType: string) {
+function collectPaths(targetElement: DOMElement, container: Container, eventType: string) {
     const paths: Paths = {
-        capture:[],
-        bubble:[]
+        capture: [],
+        bubble: []
     }
-    while(targetElement && targetElement !== container){
+    while (targetElement && targetElement !== container) {
         const elementProps = targetElement[elementPropsKey]
-        if(elementProps){
+        if (elementProps) {
             //click
             const callbackNameList = getEventCallbackNameFromEventType(eventType)
-            if(callbackNameList){
-                callbackNameList.forEach((callbackName,i) => {
+            if (callbackNameList) {
+                callbackNameList.forEach((callbackName, i) => {
                     const eventCallback = elementProps[callbackName]
-                    if(eventCallback){
-                        if(i === 0){
+                    if (eventCallback) {
+                        if (i === 0) {
                             paths.capture.unshift(eventCallback)
-                        }else{
+                        } else {
                             paths.bubble.push(eventCallback)
                         }
                     }
@@ -107,4 +110,16 @@ function collectPaths(targetElement: DOMElement,container: Container,eventType: 
         targetElement = targetElement.parentNode as DOMElement
     }
     return paths
+}
+function eventTypeToSchedulerPriority(eventType: string) {
+    switch (eventType) {
+        case 'click':
+        case 'mousedown':
+        case 'mouseup':
+            return unstable_ImmediatePriority
+        case 'scroll':
+            return unstable_UserBlockingPriority
+        default:
+            return unstable_NormalPriority
+    }
 }
