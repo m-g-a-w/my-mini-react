@@ -111,12 +111,19 @@ export const createWorkInProgress = (current: FiberNode, pendingProps: Props): F
 }
 export const createFiberFromElement = (element: ReactElement): FiberNode => {
     const { type, key, props } = element; // 解构React元素的类型、键和属性
-    let fiberTag:WorkTag = FunctionComponent
-    if(typeof type === 'string'){
-       fiberTag = HostComponent; // 如果类型是字符串，设置为HostComponent 
-    }else if(typeof type === 'function' && __DEV__) {
-        console.warn('createFiberFromElement未实现的类型');
+    let fiberTag: WorkTag;
+    
+    if (typeof type === 'string') {
+        fiberTag = HostComponent; // 如果类型是字符串，设置为HostComponent 
+    } else if (typeof type === 'function') {
+        fiberTag = FunctionComponent; // 如果类型是函数，设置为FunctionComponent
+    } else {
+        if (__DEV__) {
+            console.warn('createFiberFromElement未实现的类型:', type);
+        }
+        fiberTag = FunctionComponent; // 默认设置为FunctionComponent
     }
+    
     const fiber = new FiberNode(fiberTag, props, key); // 创建新的Fiber节点
     fiber.type = type; // 设置Fiber节点的类型
     return fiber; // 返回创建的Fiber节点

@@ -54,8 +54,10 @@ function updateFragment(wip: FiberNode) {
 }
 function updateHostComponent(wip: FiberNode) {
     const nextProps = wip.pendingProps; // 获取待处理的属性
-    const nextChildren = nextProps.children; // 获取待处理的属性
-    reconcileChildren(wip, nextChildren); // 递归处理子节点
+    const nextChildren = nextProps.children; // 获取待处理的子节点
+    // 确保 nextChildren 不为 undefined，如果为 undefined 则使用 null
+    const children = nextChildren !== undefined ? nextChildren : null;
+    reconcileChildren(wip, children); // 递归处理子节点
     return wip.child; // 返回子节点
 }
 function reconcileChildren(wip: FiberNode, children?: ReactElement) {

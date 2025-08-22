@@ -277,7 +277,7 @@ function getHostSibling(fiber: FiberNode) {
             if (node.child === null) {
                 continue findSibling;
             } else {
-                node.child.return = node.child;
+                node.child.return = node.return;
                 node = node.child;
             }
         }
@@ -323,6 +323,8 @@ function insertOrAppendPlacementNodeIntoContainer(
 
         return;
     }
+    
+    // 对于函数组件等，递归处理子节点
     const child = finishedWork.child;
     if (child !== null) {
         insertOrAppendPlacementNodeIntoContainer(child, hostParent);
