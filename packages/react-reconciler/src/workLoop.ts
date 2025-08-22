@@ -118,20 +118,6 @@ function commitRoot(root: FiberRootNode) {
         markRootFinished(root, lane);
     }
 
-    if(
-        (finishedWork.flags & PassiveMask) !== NoFlags 
-        || (finishedWork.subtreeFlags & PassiveMask) !== NoFlags
-    ){
-        if(!rootDoesHasPassiveEffect){
-            rootDoesHasPassiveEffect = true;
-            //调度副作用
-            scheduleCallback(NormalPriority,()=>{
-                //执行副作用
-                flushPassiveEffects(root.pendingPassiveEffects)
-                return
-            })
-        }
-    }
     //判断是否存在3个子阶段需要执行的操作
     const subtreeFlags = (finishedWork.subtreeFlags & (MutationMask | PassiveMask)) !== NoFlags; // 检查子树标记是否包含变更标记
     const rootHasEffect = (finishedWork.flags & (MutationMask | PassiveMask)) !== NoFlags; // 检查根节点是否有副作用标记
@@ -145,7 +131,25 @@ function commitRoot(root: FiberRootNode) {
     }else{
         root.current = finishedWork;
     }
-    rootDoesHasPassiveEffect = false;
+
+    // 在mutation effects执行完后，检查是否需要调度passive effects
+    if(
+        (finishedWork.flags & PassiveMask) !== NoFlags 
+        || (finishedWork.subtreeFlags & PassiveMask) !== NoFlags
+        || root.pendingPassiveEffects.unmount.length > 0
+        || root.pendingPassiveEffects.update.length > 0
+    ){
+        if(!rootDoesHasPassiveEffect){
+            rootDoesHasPassiveEffect = true;
+            //调度副作用
+            scheduleCallback(NormalPriority,()=>{
+                //执行副作用
+                flushPassiveEffects(root.pendingPassiveEffects)
+                rootDoesHasPassiveEffect = false;
+                return
+            })
+        }
+    }
     ensureRootIsScheduled(root);
 }
 

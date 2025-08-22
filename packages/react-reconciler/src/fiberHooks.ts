@@ -31,7 +31,7 @@ export interface Effect {
     next: Effect | null
 
 }
-type EffectCallback = () => void | null;
+type EffectCallback = () => (() => void) | void;
 type EffectDeps = any[] | null;
 
 export function renderWithHooks(wip: FiberNode,lane: Lane) {
@@ -137,10 +137,10 @@ function pushEffect(hookFlags: Flags,
     const fiber = currentlyRenderingFiber as FiberNode;
     const updateQueue = fiber.updateQueue as FCUpdateQueue<any>;
     if(updateQueue === null){
-        const updateQueue = createFCUpdateQueue();
-        fiber.updateQueue = updateQueue;
+        const newUpdateQueue = createFCUpdateQueue();
+        fiber.updateQueue = newUpdateQueue;
         effect.next = effect;
-        updateQueue.lastEffect = effect;
+        newUpdateQueue.lastEffect = effect;
     }
     else{
         //插入effect

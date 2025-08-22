@@ -105,9 +105,21 @@ function commitPassiveEffect(
     
     const updateQueue = fiber.updateQueue as FCUpdateQueue<any>;
     if (updateQueue !== null && updateQueue.lastEffect !== null) {
+        
         if (type === 'unmount') {
-            // 对于unmount类型，推入lastEffect
-            root.pendingPassiveEffects.unmount.push(updateQueue.lastEffect);
+            // 对于unmount类型，推入整个effect链表
+            if (updateQueue.lastEffect !== null) {
+                // 遍历整个effect链表，推入所有effects
+                const lastEffect = updateQueue.lastEffect;
+                const firstEffect = lastEffect.next;
+                if (firstEffect !== null) {
+                    let effect = firstEffect;
+                    do {
+                        root.pendingPassiveEffects.unmount.push(effect);
+                        effect = effect.next as Effect;
+                    } while (effect !== firstEffect);
+                }
+            }
         } else if (type === 'update') {
             // 对于update类型，检查是否有需要执行的effects
             const lastEffect = updateQueue.lastEffect;
@@ -328,7 +340,14 @@ function commitHookEffectList(
     lastEffect: Effect,
     callback: (effect: Effect) => void
 ) {
+    if (lastEffect === null) {
+        return;
+    }
+    
     let effect = lastEffect.next as Effect;
+    if (effect === null) {
+        return;
+    }
 
     do {
         if ((effect.tag & flags) === flags) {

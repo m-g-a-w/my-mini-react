@@ -2,6 +2,7 @@ import { ReactElement } from "shared/ReactTypes";
 import { Container,Instance } from "./hostConfig";
 import { createContainer, updateContainer } from "react-reconciler/src/fiberReconciler"; 
 import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from "shared/ReactSymbols";
+import * as Scheduler from "scheduler";
 
 let idCounter = 0;
 
@@ -75,6 +76,7 @@ export function createRoot() {
     }
 
     return {
+        _Scheduler: Scheduler,
         render(element:ReactElement){
             updateContainer(element, root); // 更新容器中的内容
         },
