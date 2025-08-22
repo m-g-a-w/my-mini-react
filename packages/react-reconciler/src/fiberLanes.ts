@@ -75,7 +75,7 @@ export function removeLanes(set: Lanes, subset: Lanes | Lane): Lanes {
     return set & ~subset;
 }
 
-function lanesToSchedulerPriority(lanes: Lanes){
+export function lanesToSchedulerPriority(lanes: Lanes){
     const lane = getHighestPriorityLane(lanes);
     if(lane === SyncLane){
         return unstable_ImmediatePriority;
