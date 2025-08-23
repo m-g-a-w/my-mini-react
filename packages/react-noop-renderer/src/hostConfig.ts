@@ -1,6 +1,6 @@
-import { FiberNode } from "react-reconciler/src/fiber";
-import { HostText, HostComponent } from "react-reconciler/src/workTags";
-import { Props } from "shared/ReactTypes";
+import { FiberNode } from "../../react-reconciler/src/fiber";
+import { HostText, HostComponent } from "../../react-reconciler/src/workTags";
+import { Props } from "../../shared/ReactTypes";
 
 export type Container = {
     rootId: number;

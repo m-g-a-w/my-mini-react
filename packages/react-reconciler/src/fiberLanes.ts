@@ -1,6 +1,6 @@
 import { FiberRootNode } from './fiber';
 import { unstable_getCurrentPriorityLevel, unstable_ImmediatePriority, unstable_UserBlockingPriority, unstable_NormalPriority, unstable_IdlePriority } from 'scheduler';
-import ReactCurrentBatchConfig from 'react/src/__tests__/currentBatchConfig';
+import ReactCurrentBatchConfig from 'react/src/currentBatchConfig';
 export type Lane = number;
 export type Lanes = number;
 

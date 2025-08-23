@@ -1,6 +1,6 @@
-import { FiberNode } from "react-reconciler/src/fiber";
-import { HostText,HostComponent } from "react-reconciler/src/workTags";
-import { Props } from "shared/ReactTypes";
+import { FiberNode } from "../../react-reconciler/src/fiber";
+import { HostText,HostComponent } from "../../react-reconciler/src/workTags";
+import { Props } from "../../shared/ReactTypes";
 import { updateFiberProps,DOMElement } from "./SyntheticEvent";
 
 export type Container = Element; // 容器类型，必须是DOM元素

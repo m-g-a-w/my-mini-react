@@ -1,5 +1,5 @@
-import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from 'shared/ReactSymbols';
-import { Key, Props, ReactElementType } from 'shared/ReactTypes';
+import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from '../../shared/ReactSymbols';
+import { Key, Props, ReactElementType } from '../../shared/ReactTypes';
 import {
 	createFiberFromElement,
 	createFiberFromFragment,

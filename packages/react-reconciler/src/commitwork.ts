@@ -1,4 +1,5 @@
-import { Container, appendChildToContainer, commitUpdate,removeChild, Instance, insertChildToContainer } from "hostConfig";
+import { Container, Instance } from "../../shared/ReactHostConfig";
+import { appendChildToContainer, commitUpdate, removeChild, insertChildToContainer } from "../../react-dom/src/hostConfig";
 import { ChildDeletion, MutationMask, NoFlags, Placement, Update,PassiveEffect, HookHasEffect, Flags } from "./fiberFlags";
 import { HostComponent, HostRoot, FunctionComponent, HostText } from "./workTags";
 import { FiberRootNode,FiberNode, PendingPassiveEffects } from "./fiber";

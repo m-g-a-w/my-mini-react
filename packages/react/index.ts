@@ -1,5 +1,4 @@
-import currentDispatcher, { Dispatcher, resolveDispatcher } from './src/__tests__/currentDispatcher';
-import ReactCurrentBatchConfig from './src/__tests__/currentBatchConfig'
+import currentDispatcher, { Dispatcher, currentBatchConfig, resolveDispatcher } from '../react-reconciler/src/currentDispatcher';
 import { jsx, jsxDEV, jsxs, isValidElement as  isValidElementFn} from './src/jsx';
 
 export const version = '0.0.0';
@@ -19,6 +18,7 @@ export const useTransition: Dispatcher['useTransition'] = () => {
 }
 //内部数据共享层
 export const __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
-    currentDispatcher
+    currentDispatcher,
+    currentBatchConfig
 }
 export const isValidElement = isValidElementFn

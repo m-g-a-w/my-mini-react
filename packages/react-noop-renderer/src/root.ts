@@ -1,7 +1,7 @@
-import { ReactElement } from "shared/ReactTypes";
+import { ReactElement } from "../../shared/ReactTypes";
 import { Container,Instance } from "./hostConfig";
-import { createContainer, updateContainer } from "react-reconciler/src/fiberReconciler"; 
-import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from "shared/ReactSymbols";
+import { createContainer, updateContainer } from "../../react-reconciler/src/fiberReconciler"; 
+import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from "../../shared/ReactSymbols";
 import * as Scheduler from "scheduler";
 
 let idCounter = 0;

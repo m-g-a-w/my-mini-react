@@ -1,20 +1,16 @@
-import { Dispatch, Dispatcher } from "react/src/__tests__/currentDispatcher";
-import currentDispatcher from "react/src/__tests__/currentDispatcher";
 import { FiberNode } from "./fiber";
 import { Flags, PassiveEffect, HookHasEffect } from "./fiberFlags";
-import internals from "shared/internals";
 import { createUpdate, createUpdateQueue, enqueueUpdate, UpdateQueue, processUpdateQueue } from "./updateQueue";
-import { Action } from "shared/ReactTypes";
-import { scheduleUpdateOnFiber } from "./workLoop";
+import { Action } from "../../shared/ReactTypes";
+import { getScheduler } from "./scheduler";
 import { requestUpdateLane, Lane, NoLane } from "./fiberLanes";
 import { Update } from "./updateQueue";
-import currentBatchConfig from "react/src/__tests__/currentBatchConfig";
+import currentDispatcher, { Dispatcher, Dispatch, currentBatchConfig } from "./currentDispatcher";
+
 let renderLane: Lane = NoLane;
 let currentlyRenderingFiber: FiberNode | null = null;
 let workInProgressHook: Hook | null = null;
 let currentHook: Hook | null = null;
-// 直接使用 react 包中的 currentDispatcher，确保实例一致
-// const { currentDispatcher } = internals; // 获取当前调度器
 
 export interface FCUpdateQueue<State> extends UpdateQueue<State> {
     lastEffect: Effect | null;
@@ -224,9 +220,7 @@ function mountState<State>(
     queue.dispatch = dispatch
     return [memoizedState, dispatch];
 }
-function updateState<State>(
-    initialState: (() => State) | State
-): [State, Dispatch<State>] {
+function updateState<State>(): [State, Dispatch<State>] {
     const hook = updateWorkInProgressHook(); // 获取当前hook
     //计算新state的逻辑
     const queue = hook.updateQueue as UpdateQueue<State>;
@@ -311,15 +305,15 @@ function updateWorkInProgressHook(): Hook {
 function mountTransition(): [boolean, (callback: () => void) => void] {
     const [isPending, setPending] = mountState(false);
     const hook = mountWorkInProgressHook();
-    const start = startTransition.bind(null, setPending)
+    const start = startTransition.bind(null, setPending);
     hook.memoizedState = start;
     return [isPending, start];
 }
 
 function updateTransition(): [boolean, (callback: () => void) => void] {
-    const [isPending] = updateState(false);
+    const [isPending] = updateState();
     const hook = updateWorkInProgressHook();
-    const start = hook.memoizedState
+    const start = hook.memoizedState;
     return [isPending as boolean, start];
 }
 
@@ -342,7 +336,7 @@ function dispatchSetState<State>(
     const lane = requestUpdateLane();
     const update = createUpdate(action, lane);
     enqueueUpdate(updateQueue, update);
-    scheduleUpdateOnFiber(fiber, lane);
+    getScheduler().scheduleUpdateOnFiber(fiber, lane);
 }
 function mountWorkInProgressHook(): Hook {
     const hook: Hook = {
@@ -367,4 +361,12 @@ function mountWorkInProgressHook(): Hook {
         workInProgressHook = hook; // 更新当前工作中的hook
     }
     return workInProgressHook; // 返回当前工作中的hook
+}
+
+export function resetHooksState() {
+    currentlyRenderingFiber = null;
+    workInProgressHook = null;
+    currentHook = null;
+    renderLane = NoLane;
+    currentDispatcher.current = null;
 }

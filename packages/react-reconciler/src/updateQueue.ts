@@ -1,5 +1,5 @@
-import { Dispatch } from 'react/src/__tests__/currentDispatcher'
-import { Action } from 'shared/ReactTypes';
+import { Dispatch } from './currentDispatcher'
+import { Action } from '../../shared/ReactTypes';
 import { Lane, isSubsetOfLanes, NoLane } from './fiberLanes';
 
 export interface Update<State> {

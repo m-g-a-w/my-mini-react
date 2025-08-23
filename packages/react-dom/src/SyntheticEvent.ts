@@ -1,4 +1,4 @@
-import { Props } from 'shared/ReactTypes'
+import { Props } from '../../shared/ReactTypes'
 import { Container } from './hostConfig'
 import { unstable_ImmediatePriority, unstable_UserBlockingPriority, unstable_NormalPriority, unstable_runWithPriority } from 'scheduler'
 

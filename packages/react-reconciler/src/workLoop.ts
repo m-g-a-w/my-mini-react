@@ -7,6 +7,7 @@ import { commitMutationEffects, commitLayoutEffects } from './commitwork';
 import { Lane, NoLane, SyncLane, mergeLanes, getHighestPriorityLane, markRootFinished } from './fiberLanes';
 import { scheduleSyncCallback, flushSyncTaskQueue } from './syncTaskQueue';
 import { scheduleMicroTask } from 'hostConfig';
+import { resetHooksState } from './fiberHooks';
 import {
     unstable_scheduleCallback as scheduleCallback,
     unstable_NormalPriority as NormalPriority,
@@ -16,6 +17,7 @@ import {
 import { lanesToSchedulerPriority } from './fiberLanes';
 import { Effect } from './fiberHooks';
 import { commitHookEffectListUnmount, commitHookEffectListDestroy, commitHookEffectListCreate } from './commitwork';
+import { setScheduler } from './scheduler';
 
 
 
@@ -137,6 +139,8 @@ function renderRoot(root: FiberRootNode, lane: Lane, shouldTimeSlice: Boolean) {
                 console.error('workLoopSync发生错误:', error);
             }
             workInProgress = null; // 重置当前工作中的Fiber节点
+            // 重置 hook 相关的全局状态
+            resetHooksState();
         }
     } while (true);
 
@@ -301,3 +305,8 @@ function completeUnitOfWork(fiber: FiberNode) {
         workInProgress = node; // 更新当前工作中的Fiber节点
     } while (node !== null);
 }
+
+// 注册调度器，打破循环依赖
+setScheduler({
+    scheduleUpdateOnFiber
+});

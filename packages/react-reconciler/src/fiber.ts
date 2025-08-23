@@ -1,4 +1,4 @@
-import { Props, Key, Ref, ReactElement } from 'shared/ReactTypes';
+import { Props, Key, Ref, ReactElement } from '../../shared/ReactTypes';
 import { WorkTag, FunctionComponent, HostComponent, Fragment } from './workTags';
 import { Flags, NoFlags } from './fiberFlags';
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
