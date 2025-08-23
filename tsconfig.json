@@ -1,11 +1,10 @@
 {
     "compileOnSave": true,
-    "include": ["./packages/**/*", "./demos/**/*"],
+    "include": ["./packages/**/*"],
     "compilerOptions": {
         "target": "ESNext",
-        "useDefineForClassFields": true,
+                "useDefineForClassFields": true,
         "module": "ESNext",
-        "jsx": "react-jsx",
         "lib": ["ESNext", "DOM"],
         "moduleResolution": "Node",
         "strict": true,

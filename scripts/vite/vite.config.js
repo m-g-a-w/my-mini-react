@@ -1,9 +1,8 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react';
 import replace from '@rollup/plugin-replace';
 import path, { resolve } from 'path';
 import { resolvePkgPath } from '../rollup/utils';
-
 
 // https://vite.dev/config/
 export default defineConfig({

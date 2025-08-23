@@ -7,7 +7,7 @@ interface TabButtonProps {
 export default function TabButton({ children, isActive, onClick }: TabButtonProps) {
   return (
     <button 
-      className={isActive ? 'active' : ''} 
+      className={`tab-button ${isActive ? 'active' : ''}`} 
       onClick={onClick}
     >
       {children}

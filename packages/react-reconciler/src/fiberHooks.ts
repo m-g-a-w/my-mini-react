@@ -1,14 +1,14 @@
-import { Dispatch,Dispatcher } from "react/src/currentDispatcher";
-import currentDispatcher from "react/src/currentDispatcher";
+import { Dispatch, Dispatcher } from "react/src/__tests__/currentDispatcher";
+import currentDispatcher from "react/src/__tests__/currentDispatcher";
 import { FiberNode } from "./fiber";
 import { Flags, PassiveEffect, HookHasEffect } from "./fiberFlags";
 import internals from "shared/internals";
 import { createUpdate, createUpdateQueue, enqueueUpdate, UpdateQueue, processUpdateQueue } from "./updateQueue";
 import { Action } from "shared/ReactTypes";
 import { scheduleUpdateOnFiber } from "./workLoop";
-import { requestUpdateLane,Lane,NoLane } from "./fiberLanes";
+import { requestUpdateLane, Lane, NoLane } from "./fiberLanes";
 import { Update } from "./updateQueue";
-
+import currentBatchConfig from "react/src/__tests__/currentBatchConfig";
 let renderLane: Lane = NoLane;
 let currentlyRenderingFiber: FiberNode | null = null;
 let workInProgressHook: Hook | null = null;
@@ -16,7 +16,7 @@ let currentHook: Hook | null = null;
 // 直接使用 react 包中的 currentDispatcher，确保实例一致
 // const { currentDispatcher } = internals; // 获取当前调度器
 
-export interface FCUpdateQueue<State> extends UpdateQueue<State>{
+export interface FCUpdateQueue<State> extends UpdateQueue<State> {
     lastEffect: Effect | null;
 }
 
@@ -38,14 +38,14 @@ export interface Effect {
 type EffectCallback = () => (() => void) | void;
 type EffectDeps = any[] | null;
 
-export function renderWithHooks(wip: FiberNode,lane: Lane) {
+export function renderWithHooks(wip: FiberNode, lane: Lane) {
     currentlyRenderingFiber = wip; // 设置当前正在渲染的fiber节点
     renderLane = lane;
-    
+
     // 重置 hook 相关状态，确保每次渲染都从干净的状态开始
     wip.memoizedState = null;
     wip.updateQueue = null;
-    
+
     const current = wip.alternate; // 获取备用节点
     let dispatcher;
     if (current !== null) {
@@ -57,7 +57,7 @@ export function renderWithHooks(wip: FiberNode,lane: Lane) {
         dispatcher = HooksDispatcherOnMount;
         currentDispatcher.current = dispatcher;
     }
-    
+
     // 添加保护机制：在组件执行期间，定期检查 currentDispatcher.current 是否被重置
     const originalDispatcher = currentDispatcher.current;
     const checkDispatcher = () => {
@@ -66,16 +66,16 @@ export function renderWithHooks(wip: FiberNode,lane: Lane) {
             currentDispatcher.current = originalDispatcher;
         }
     };
-    
+
     const Component = wip.type; // 获取组件类型
     const props = wip.pendingProps; // 获取待处理的属性
-    
+
     // 在组件执行前检查
     checkDispatcher();
-    
+
     // 临时保存当前的 currentDispatcher.current
     const savedDispatcher = currentDispatcher.current;
-    
+
     // 确保在组件执行期间，currentDispatcher.current 不会被重置
     const safeComponentCall = () => {
         // 在每次 hook 调用前，确保 currentDispatcher.current 是正确的
@@ -84,12 +84,12 @@ export function renderWithHooks(wip: FiberNode,lane: Lane) {
         }
         return Component(props);
     };
-    
+
     const children = safeComponentCall(); // 调用组件函数获取子节点
-    
+
     // 在组件执行后检查
     checkDispatcher();
-    
+
     //重置操作
     currentlyRenderingFiber = null; // 清除当前渲染的fiber节点
     workInProgressHook = null;
@@ -100,42 +100,44 @@ export function renderWithHooks(wip: FiberNode,lane: Lane) {
 
 const HooksDispatcherOnMount: Dispatcher = {
     useState: mountState,
-    useEffect: mountEffect
+    useEffect: mountEffect,
+    useTransition: mountTransition
 }
 const HooksDispatcherUpdate: Dispatcher = {
     useState: updateState,
-    useEffect: updateEffect
+    useEffect: updateEffect,
+    useTransition: updateTransition
 }
 
-function mountEffect(create: EffectCallback | void,deps: EffectDeps | void){
+function mountEffect(create: EffectCallback | void, deps: EffectDeps | void) {
     const hook = mountWorkInProgressHook();
     const nextDeps = deps === undefined ? null : deps;
     (currentlyRenderingFiber as FiberNode).flags |= PassiveEffect
 
-    hook.memoizedState = pushEffect(PassiveEffect | HookHasEffect ,create,undefined,nextDeps);
+    hook.memoizedState = pushEffect(PassiveEffect | HookHasEffect, create, undefined, nextDeps);
 }
 
-function updateEffect(create: EffectCallback | void,deps: EffectDeps | void){
+function updateEffect(create: EffectCallback | void, deps: EffectDeps | void) {
     const hook = updateWorkInProgressHook();
     const nextDeps = deps === undefined ? null : deps;
     let destroy: EffectCallback | void = undefined;
-    
-    if(currentHook !== null){
+
+    if (currentHook !== null) {
         const prevEffect = currentHook.memoizedState as Effect;
         destroy = prevEffect.destroy;
-        
-        if(nextDeps !== null){
+
+        if (nextDeps !== null) {
             //浅比较依赖
             const prevDeps = prevEffect.deps;
-            if(areHookInputsEqual(nextDeps,prevDeps)){
-                hook.memoizedState = pushEffect(PassiveEffect,create,destroy,nextDeps);
+            if (areHookInputsEqual(nextDeps, prevDeps)) {
+                hook.memoizedState = pushEffect(PassiveEffect, create, destroy, nextDeps);
                 return;
             }
         }
         //浅比较 不相等
         (currentlyRenderingFiber as FiberNode).flags |= PassiveEffect;
         hook.memoizedState = pushEffect(
-            PassiveEffect | HookHasEffect ,
+            PassiveEffect | HookHasEffect,
             create,
             destroy,
             nextDeps
@@ -143,15 +145,15 @@ function updateEffect(create: EffectCallback | void,deps: EffectDeps | void){
     }
 }
 
-function areHookInputsEqual(nextDeps: EffectDeps,prevDeps: EffectDeps){
-    if(prevDeps === null || nextDeps === null){
+function areHookInputsEqual(nextDeps: EffectDeps, prevDeps: EffectDeps) {
+    if (prevDeps === null || nextDeps === null) {
         return false;
     }
-    if(prevDeps.length === 0 && nextDeps.length === 0){
+    if (prevDeps.length === 0 && nextDeps.length === 0) {
         return true;
     }
-    for(let i = 0; i < prevDeps.length && i < nextDeps.length; i++){
-        if(Object.is(prevDeps[i],nextDeps[i])){
+    for (let i = 0; i < prevDeps.length && i < nextDeps.length; i++) {
+        if (Object.is(prevDeps[i], nextDeps[i])) {
             continue
         }
         return false;
@@ -162,29 +164,29 @@ function areHookInputsEqual(nextDeps: EffectDeps,prevDeps: EffectDeps){
 function pushEffect(hookFlags: Flags,
     create: EffectCallback | void,
     destroy: EffectCallback | void,
-    deps: EffectDeps): Effect{
+    deps: EffectDeps): Effect {
     const effect: Effect = {
         tag: hookFlags,
         create,
         destroy,
         deps,
-        next:null
+        next: null
     }
     const fiber = currentlyRenderingFiber as FiberNode;
     const updateQueue = fiber.updateQueue as FCUpdateQueue<any>;
-    if(updateQueue === null){
+    if (updateQueue === null) {
         const newUpdateQueue = createFCUpdateQueue();
         fiber.updateQueue = newUpdateQueue;
         effect.next = effect;
         newUpdateQueue.lastEffect = effect;
     }
-    else{
+    else {
         //插入effect
         const lastEffect = updateQueue.lastEffect;
-        if(lastEffect === null){
+        if (lastEffect === null) {
             effect.next = effect;
             updateQueue.lastEffect = effect;
-        }else{
+        } else {
             const firstEffect = lastEffect.next;
             lastEffect.next = effect;
             effect.next = firstEffect;
@@ -194,7 +196,7 @@ function pushEffect(hookFlags: Flags,
     return effect;
 }
 
-function createFCUpdateQueue<State>(){
+function createFCUpdateQueue<State>() {
     const updateQueue = createUpdateQueue<State>() as FCUpdateQueue<State>
     updateQueue.lastEffect = null;
     return updateQueue;
@@ -216,7 +218,7 @@ function mountState<State>(
     const queue = createUpdateQueue<State>(); // 创建一个更新队列
     hook.updateQueue = queue; // 将更新队列赋值给hook
     hook.memoizedState = memoizedState; // 设置hook的初始状态
-
+    hook.baseState = memoizedState;
     // @ts-ignore
     const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue);
     queue.dispatch = dispatch
@@ -228,16 +230,16 @@ function updateState<State>(
     const hook = updateWorkInProgressHook(); // 获取当前hook
     //计算新state的逻辑
     const queue = hook.updateQueue as UpdateQueue<State>;
-    const baseState= hook.baseState;
+    const baseState = hook.baseState;
 
     const pending = queue.shared.pending;
     const current = currentHook as Hook
     let baseQueue = current.baseQueue;
     //pending baseQueue update保存在current中
 
-    
-    if(pending !== null) {
-        if(baseQueue !== null){
+
+    if (pending !== null) {
+        if (baseQueue !== null) {
             const baseFirst = baseQueue.next;
             let pendingFirst = pending.next;
 
@@ -247,17 +249,18 @@ function updateState<State>(
         baseQueue = pending;
         current.baseQueue = pending;
         queue.shared.pending = null;
-        if(baseQueue !== null){
-            const { memoizedState,baseQueue: newBaseQueue, baseState: newBaseState}
-             = processUpdateQueue(hook.memoizedState, pending, renderLane);
-            hook.memoizedState = memoizedState;
-            hook.baseState = newBaseState;
-            hook.baseQueue = newBaseQueue;
-            return [memoizedState, queue.dispatch as Dispatch<State>];
-        }
-
         // Remove this line since memoizedState is not defined in this scope
         queue.shared.pending = null; // 清空已处理的更新队列
+    }
+    if (baseQueue !== null) {
+        const { memoizedState,
+            baseQueue: newBaseQueue,
+            baseState: newBaseState
+        } = processUpdateQueue(hook.memoizedState, pending, renderLane);
+        hook.memoizedState = memoizedState;
+        hook.baseState = newBaseState;
+        hook.baseQueue = newBaseQueue;
+        return [memoizedState, queue.dispatch as Dispatch<State>];
     }
     return [hook.memoizedState, queue.dispatch as Dispatch<State>];
 }
@@ -276,13 +279,13 @@ function updateWorkInProgressHook(): Hook {
         // 后续调用，获取下一个 hook
         nextCurrentHook = currentHook.next;
     }
-    
+
     // 如果 nextCurrentHook 为 null，说明 hook 数量不匹配
     // 这在 React 中是不允许的，应该抛出错误
     if (nextCurrentHook === null) {
         throw new Error(`当前组件: ${currentlyRenderingFiber?.type} 在更新时hook比上一次多`);
     }
-    
+
     currentHook = nextCurrentHook as Hook;
     const newHook: Hook = {
         memoizedState: currentHook.memoizedState,
@@ -291,7 +294,7 @@ function updateWorkInProgressHook(): Hook {
         baseState: currentHook.baseState,
         baseQueue: currentHook.baseQueue
     }
-    
+
     if (workInProgressHook === null) {
         if (currentlyRenderingFiber === null) {
             throw new Error('hook只能在函数组件中执行');
@@ -305,6 +308,32 @@ function updateWorkInProgressHook(): Hook {
     }
     return workInProgressHook;
 }
+function mountTransition(): [boolean, (callback: () => void) => void] {
+    const [isPending, setPending] = mountState(false);
+    const hook = mountWorkInProgressHook();
+    const start = startTransition.bind(null, setPending)
+    hook.memoizedState = start;
+    return [isPending, start];
+}
+
+function updateTransition(): [boolean, (callback: () => void) => void] {
+    const [isPending] = updateState(false);
+    const hook = updateWorkInProgressHook();
+    const start = hook.memoizedState
+    return [isPending as boolean, start];
+}
+
+
+function startTransition(setPending: Dispatch<boolean>, callback: () => void) {
+    setPending(true);
+    const prevTransition = currentBatchConfig.transition;
+    currentBatchConfig.transition = 1;
+
+    callback();
+    setPending(false);
+
+    currentBatchConfig.transition = prevTransition;
+}
 
 function dispatchSetState<State>(
     fiber: FiberNode,
@@ -313,7 +342,7 @@ function dispatchSetState<State>(
     const lane = requestUpdateLane();
     const update = createUpdate(action, lane);
     enqueueUpdate(updateQueue, update);
-    scheduleUpdateOnFiber(fiber,lane);
+    scheduleUpdateOnFiber(fiber, lane);
 }
 function mountWorkInProgressHook(): Hook {
     const hook: Hook = {

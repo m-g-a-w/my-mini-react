@@ -8,35 +8,29 @@ interface Post {
 
 export default function PostsTab() {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 模拟异步加载数据
-    const timer = setTimeout(() => {
-      setPosts([
-        { id: 1, title: '第一篇博文', content: '这是第一篇博文的内容...' },
-        { id: 2, title: '第二篇博文', content: '这是第二篇博文的内容...' },
-        { id: 3, title: '第三篇博文', content: '这是第三篇博文的内容...' }
-      ]);
-      setLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
+      const postsArray: Post[] = [];
+      for (let i = 1; i <= 50; i++) {
+        postsArray.push({
+          id: i,
+          title: `博文${i}`,
+          content: `这是第${i}篇博文的内容...`
+        });
+      }
+      setPosts(postsArray);
   }, []);
-
-  if (loading) {
-    return <div>正在加载博文...</div>;
-  }
 
   return (
     <div>
       <h3>博文列表</h3>
-      {posts.map(post => (
-        <div key={post.id} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ccc' }}>
-          <h4>{post.title}</h4>
-          <p>{post.content}</p>
-        </div>
-      ))}
+      <ul>
+        {posts.map(post => (
+          <li key={post.id} style={{ marginBottom: '10px', padding: '5px', border: '1px solid #ccc' }}>
+            <strong>{post.title}</strong> - {post.content}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 } 

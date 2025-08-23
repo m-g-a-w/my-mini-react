@@ -1,6 +1,5 @@
 import { useState } from '../../packages/react'
 import { createRoot } from '../../packages/react-dom/src/root'
-
 import AboutTab from '../test/AboutTab'
 import PostsTab from '../test/PostsTab'
 import ContactTab from '../test/ContactTab'
@@ -57,7 +56,7 @@ export default function TabContainer() {
         {aboutButton}
         {postsButton}
         {contactButton}
-      </div>
+        </div>
       <hr />
       <div className="tab-content">
         {content}
