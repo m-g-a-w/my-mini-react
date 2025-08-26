@@ -5,6 +5,7 @@ import { ReactElement } from "../../shared/ReactTypes";
 import { reconcileChildFibers, mountChildFibers } from "./childFibers";
 import { renderWithHooks } from "./fiberHooks";
 import { Lane } from "./fiberLanes";
+import { Ref } from "./fiberFlags";
 
 //递归中的递阶段
 export const beginWork = (wip: FiberNode,renderLane: Lane) => {
@@ -20,7 +21,7 @@ export const beginWork = (wip: FiberNode,renderLane: Lane) => {
             return updateFunctionComponent(wip,renderLane);
         case Fragment:
             return updateFragment(wip);
-            default:
+        default:
             if(__DEV__) {
                 console.warn('beginWork未实现的类型');
             }
@@ -56,6 +57,7 @@ function updateHostComponent(wip: FiberNode) {
     const nextProps = wip.pendingProps; // 获取待处理的属性
     const nextChildren = nextProps.children; // 获取待处理的子节点
     // 确保 nextChildren 不为 undefined，如果为 undefined 则使用 null
+    markRef(wip.alternate, wip);
     const children = nextChildren !== undefined ? nextChildren : null;
     reconcileChildren(wip, children); // 递归处理子节点
     return wip.child; // 返回子节点
@@ -67,5 +69,13 @@ function reconcileChildren(wip: FiberNode, children?: ReactElement) {
         wip.child = reconcileChildFibers(wip, current?.child, children); // 更新子节点
     }else{
         wip.child = mountChildFibers(wip, null, children); // 创建新的子节点
+    }
+}
+
+function markRef(current: FiberNode | null, workInProgress: FiberNode) {
+    const ref = workInProgress.ref;
+    if((current !== null && ref !== null) ||
+     (current !== null && current.ref !== ref)) {
+        workInProgress.flags |= Ref;
     }
 }

@@ -1,10 +1,13 @@
 import { FiberNode } from './fiber';
 import { HostComponent,Fragment,HostRoot, HostText,FunctionComponent } from './workTags';
 import { createInstance,appendInitialChild, Container, createTextInstance, Instance } from 'hostConfig';
-import { NoFlags,Update } from './fiberFlags';
+import { NoFlags,Update,Ref } from './fiberFlags';
 
 function markUpdate(wip: FiberNode){
     wip.flags |= Update;
+}
+function markRef(wip: FiberNode){
+    wip.flags |= Ref;
 }
 
 export const completeWork = (wip: FiberNode) => {
@@ -18,13 +21,18 @@ export const completeWork = (wip: FiberNode) => {
                 //判断props是否变化
                 //如果变化则添加update tag
                 markUpdate(wip);
+                if(current.ref !== wip.ref){
+                markRef(wip);
             }
-            else{
+            } else {
                 //1.构建DOM
                 const instance = createInstance(wip.type,newProps);
                 //2.将DOM插入到DOM树中
                 appendAllChildren(instance, wip); // 将子节点添加到实例中
                 wip.stateNode = instance; // 将实例赋值给wip的stateNode
+                if(wip.ref !== null){
+                    markRef(wip);
+                }
             }
             bubbleProperties(wip); // 处理子节点的属性
             return null;

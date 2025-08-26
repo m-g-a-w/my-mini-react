@@ -1,9 +1,10 @@
+import * as React from '../../packages/react'
 import { useState, useTransition, createElement } from '../../packages/react'
 import { createRoot } from '../../packages/react-dom/src/root'
-import AboutTab from '../test/AboutTab'
-import PostsTab from '../test/PostsTab'
-import ContactTab from '../test/ContactTab'
-import TabButton from '../test/TabButton'
+import AboutTab from './AboutTab'
+import PostsTab from './PostsTab'
+import ContactTab from './ContactTab'
+import TabButton from './TabButton'
 
 export default function TabContainer() {
   const [tab, setTab] = useState('about');

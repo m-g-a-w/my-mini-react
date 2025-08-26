@@ -231,22 +231,20 @@ function commitRoot(root: FiberRootNode) {
 
     // 在mutation effects执行完后，检查是否需要调度passive effects
     if (
-        (finishedWork.flags & PassiveMask) !== NoFlags
-        || (finishedWork.subtreeFlags & PassiveMask) !== NoFlags
-        || root.pendingPassiveEffects.unmount.length > 0
-        || root.pendingPassiveEffects.update.length > 0
+        (finishedWork.flags & PassiveMask) !== NoFlags ||
+        (finishedWork.subtreeFlags & PassiveMask) !== NoFlags
     ) {
         if (!rootDoesHasPassiveEffect) {
             rootDoesHasPassiveEffect = true;
-            //调度副作用
+            // 调度副作用
             scheduleCallback(NormalPriority, () => {
-                //执行副作用
-                flushPassiveEffects(root.pendingPassiveEffects)
-                rootDoesHasPassiveEffect = false;
-                return
-            })
+                // 执行副作用
+                flushPassiveEffects(root.pendingPassiveEffects);
+                return;
+            });
         }
     }
+    rootDoesHasPassiveEffect = false;
     ensureRootIsScheduled(root);
 }
 

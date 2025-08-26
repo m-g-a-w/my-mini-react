@@ -105,12 +105,14 @@ export const createWorkInProgress = (current: FiberNode, pendingProps: Props): F
     wip.type = current.type; // 确保备用节点的类型与当前节点一致
     wip.updateQueue = current.updateQueue; // 继承当前节点的更新队列
     wip.child = current.child; // 继承当前节点的子节点
+    //数据
     wip.memoizedProps = current.memoizedProps; // 继承当前节点的已处理属性
     wip.memoizedState = current.memoizedState; // 继承当前
+    wip.ref = current.ref; // 继承当前的ref
     return wip; // 返回备用节点
 }
 export const createFiberFromElement = (element: ReactElement): FiberNode => {
-    const { type, key, props } = element; // 解构React元素的类型、键和属性
+    const { type, key, props,ref } = element; // 解构React元素的类型、键和属性
     let fiberTag: WorkTag;
     
     if (typeof type === 'string') {
@@ -126,6 +128,7 @@ export const createFiberFromElement = (element: ReactElement): FiberNode => {
     
     const fiber = new FiberNode(fiberTag, props, key); // 创建新的Fiber节点
     fiber.type = type; // 设置Fiber节点的类型
+    fiber.ref = ref; // 设置Fiber节点的ref
     return fiber; // 返回创建的Fiber节点
 }
 
