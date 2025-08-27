@@ -5,7 +5,9 @@ import { Action } from "../../shared/ReactTypes";
 import { getScheduler } from "./scheduler";
 import { requestUpdateLane, Lane, NoLane } from "./fiberLanes";
 import { Update } from "./updateQueue";
-import currentDispatcher, { Dispatcher, Dispatch, currentBatchConfig } from "./currentDispatcher";
+import { currentDispatcher } from 'react';
+import { Dispatcher, Dispatch } from "./currentDispatcher";
+import ReactCurrentBatchConfig from "./ReactCurrentBatchConfig";
 
 let renderLane: Lane = NoLane;
 let currentlyRenderingFiber: FiberNode | null = null;
@@ -47,50 +49,26 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
     if (current !== null) {
         //update
         dispatcher = HooksDispatcherUpdate;
-        currentDispatcher.current = dispatcher;
     } else {
         //mount
         dispatcher = HooksDispatcherOnMount;
-        currentDispatcher.current = dispatcher;
     }
-
-    // 添加保护机制：在组件执行期间，定期检查 currentDispatcher.current 是否被重置
-    const originalDispatcher = currentDispatcher.current;
-    const checkDispatcher = () => {
-        if (currentDispatcher.current !== originalDispatcher) {
-            // 恢复正确的 dispatcher
-            currentDispatcher.current = originalDispatcher;
-        }
-    };
+    
+    // 设置 dispatcher
+    currentDispatcher.current = dispatcher;
 
     const Component = wip.type; // 获取组件类型
     const props = wip.pendingProps; // 获取待处理的属性
 
-    // 在组件执行前检查
-    checkDispatcher();
+    const children = Component(props); // 调用组件函数获取子节点
 
-    // 临时保存当前的 currentDispatcher.current
-    const savedDispatcher = currentDispatcher.current;
-
-    // 确保在组件执行期间，currentDispatcher.current 不会被重置
-    const safeComponentCall = () => {
-        // 在每次 hook 调用前，确保 currentDispatcher.current 是正确的
-        if (currentDispatcher.current !== savedDispatcher) {
-            currentDispatcher.current = savedDispatcher;
-        }
-        return Component(props);
-    };
-
-    const children = safeComponentCall(); // 调用组件函数获取子节点
-
-    // 在组件执行后检查
-    checkDispatcher();
-
-    //重置操作
-    currentlyRenderingFiber = null; // 清除当前渲染的fiber节点
+    // 在组件函数执行完成后，重置 hook 相关状态
+    // 注意：不要清除 currentDispatcher.current，让它在整个渲染周期中保持有效
+    // 也不要立即清除 currentlyRenderingFiber，因为 hooks 可能还需要访问它
     workInProgressHook = null;
     currentHook = null;
     renderLane = NoLane;
+    
     return children
 }
 
@@ -332,13 +310,13 @@ function updateTransition(): [boolean, (callback: () => void) => void] {
 
 function startTransition(setPending: Dispatch<boolean>, callback: () => void) {
     setPending(true);
-    const prevTransition = currentBatchConfig.transition;
-    currentBatchConfig.transition = 1;
+    const prevTransition = ReactCurrentBatchConfig.transition;
+    ReactCurrentBatchConfig.transition = 1;
 
     callback();
     setPending(false);
 
-    currentBatchConfig.transition = prevTransition;
+    ReactCurrentBatchConfig.transition = prevTransition;
 }
 
 function dispatchSetState<State>(
@@ -380,5 +358,6 @@ export function resetHooksState() {
     workInProgressHook = null;
     currentHook = null;
     renderLane = NoLane;
-    currentDispatcher.current = null;
+    // 不要重置 currentDispatcher.current，因为组件可能还在渲染中
+    // currentDispatcher.current = null;
 }

@@ -21,15 +21,15 @@ export default defineConfig({
     alias:[
       {
         find:'react',
-        replacement:resolvePkgPath('react')
+        replacement: resolvePkgPath('react')
       },
       {
         find:'react-dom',
-        replacement:resolvePkgPath('react-dom')
+        replacement: resolvePkgPath('react-dom')
       },
       {
         find:'react-noop-renderer',
-        replacement:resolvePkgPath('react-noop-renderer')
+        replacement: resolvePkgPath('react-noop-renderer')
       },
       {
         find:'hostConfig',
@@ -38,12 +38,8 @@ export default defineConfig({
           './src/hostConfig.ts')
       },
       {
-        find:'react/jsx-runtime',
-        replacement:resolvePkgPath('react') + '/jsx-runtime'
-      },
-      {
-        find:'react/jsx-dev-runtime',
-        replacement:resolvePkgPath('react') + '/jsx-dev-runtime'
+        find:'shared',
+        replacement: resolvePkgPath('shared')
       }
     ]
   }

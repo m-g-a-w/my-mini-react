@@ -8,6 +8,7 @@ import { Lane, NoLane, SyncLane, mergeLanes, getHighestPriorityLane, markRootFin
 import { scheduleSyncCallback, flushSyncTaskQueue } from './syncTaskQueue';
 import { scheduleMicroTask } from 'hostConfig';
 import { resetHooksState } from './fiberHooks';
+import { currentDispatcher } from 'react';
 import {
     unstable_scheduleCallback as scheduleCallback,
     unstable_NormalPriority as NormalPriority,
@@ -40,6 +41,9 @@ function prepareFreshStack(root: FiberRootNode, lane: Lane) {
     root.finishedWork = null;
     workInProgress = createWorkInProgress(root.current, {}); // 设置当前工作中的Fiber节点
     wipRootRenderLane = lane;
+    
+    // 重置 dispatcher，确保每次渲染都从干净的状态开始
+    currentDispatcher.current = null;
 }
 export function scheduleUpdateOnFiber(fiber: FiberNode, lane: Lane) {
     //调度功能

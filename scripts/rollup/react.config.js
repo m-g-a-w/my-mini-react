@@ -1,5 +1,7 @@
 import {getPackageJSON,resolvePkgPath,getBaseRollupPlugins} from './utils.js';
 import generatePackageJson from 'rollup-plugin-generate-package-json';
+import alias from '@rollup/plugin-alias';
+import path from 'path';
 
 const name = getPackageJSON('react').name;
 //react包的路径
@@ -15,14 +17,25 @@ export default [
       name: 'React',
       format: 'umd', //兼容CJS与EMS格式
     },
-    plugins: [...getBaseRollupPlugins(),generatePackageJson({
-      inputFolder: pkgPath,
-      outputFolder: pkgDistPath,
-      baseContents: ({name,description,version}) => ({
-        name,description,version,
-        main: 'index.js'
+    plugins: [
+              alias({
+          entries: [
+            { 
+              find: 'react-reconciler', 
+              replacement: '../react-reconciler' 
+            }
+          ]
+        }),
+      ...getBaseRollupPlugins(),
+      generatePackageJson({
+        inputFolder: pkgPath,
+        outputFolder: pkgDistPath,
+        baseContents: ({name,description,version}) => ({
+          name,description,version,
+          main: 'index.js'
+        })
       })
-    })]
+    ]
   },
   //打包jsx-runtime包
   {

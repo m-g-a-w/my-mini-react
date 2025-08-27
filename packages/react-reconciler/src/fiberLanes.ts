@@ -1,6 +1,6 @@
 import { FiberRootNode } from './fiber';
 import { unstable_getCurrentPriorityLevel, unstable_ImmediatePriority, unstable_UserBlockingPriority, unstable_NormalPriority, unstable_IdlePriority } from 'scheduler';
-import ReactCurrentBatchConfig from 'react/src/__tests__/currentBatchConfig';
+import ReactCurrentBatchConfig from './ReactCurrentBatchConfig';
 export type Lane = number;
 export type Lanes = number;
 
@@ -17,7 +17,7 @@ export function mergeLanes(laneA: Lane, laneB: Lane): Lanes {
 }
 
 export function requestUpdateLane(){
-    const isTransition = ReactCurrentBatchConfig.transition !== null;
+    const isTransition = ReactCurrentBatchConfig.transition !== 0;
     if(isTransition){
         return TransitionLane;
     }
