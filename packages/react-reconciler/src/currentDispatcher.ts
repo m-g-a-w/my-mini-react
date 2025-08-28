@@ -1,4 +1,4 @@
-import { Action, ReactContext } from "../../shared/ReactTypes";
+import { Action, ReactContext,Usable } from "../../shared/ReactTypes";
 import { currentDispatcher } from 'react';
 
 export interface Dispatcher {
@@ -7,7 +7,7 @@ export interface Dispatcher {
     useTransition: () => [boolean, (callback: () => void) => void];
     useRef: <T>(initialValue: T) => {current: T},
     useContext: <T>(context: ReactContext<T>) => T;
-
+    use: <T>(usable: Usable<T>) => T;
 }
 
 export type Dispatch<T> = (action: Action<T>) => void;

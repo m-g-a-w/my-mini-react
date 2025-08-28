@@ -1,6 +1,6 @@
 import { createElement as createElementFn } from './src/jsx';
 import { createContext } from './src/context';
-import { ReactContext } from 'shared/ReactTypes';
+import { ReactContext,Usable } from 'shared/ReactTypes';
 export type { ReactContext };
 
 
@@ -15,6 +15,7 @@ export interface Dispatcher {
     useTransition: () => [boolean, (callback: () => void) => void];
     useRef: <T>(initialValue: T) => { current: T };
     useContext: <T>(context: ReactContext<T>) => T;
+    use: <T>(usable: Usable<T>) => T;
 }
 
 // 创建全局的 currentDispatcher 实例
@@ -62,6 +63,11 @@ export const useTransition: Dispatcher['useTransition'] = () => {
 export const useContext: Dispatcher['useContext'] = (context) => {
 	const dispatcher = resolveDispatcher() as Dispatcher;
 	return dispatcher.useContext(context);
+};
+
+export const use: Dispatcher['use'] = <T>(usable: Usable<T>) => {
+	const dispatcher = resolveDispatcher() as Dispatcher;
+	return dispatcher.use(usable);
 };
 
 // 导出 createContext

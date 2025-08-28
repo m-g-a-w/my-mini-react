@@ -1,14 +1,15 @@
 import { FiberNode } from "./fiber";
 import { Flags, PassiveEffect, HookHasEffect } from "./fiberFlags";
 import { createUpdate, createUpdateQueue, enqueueUpdate, UpdateQueue, processUpdateQueue } from "./updateQueue";
-import { Action,ReactContext } from "../../shared/ReactTypes";
+import { Action,ReactContext,Usable,Thenable } from "../../shared/ReactTypes";
 import { getScheduler } from "./scheduler";
 import { requestUpdateLane, Lane, NoLane, NoLanes } from "./fiberLanes";
 import { Update } from "./updateQueue";
 import { Dispatcher, Dispatch, resolveDispatcher } from "./currentDispatcher";
 import ReactCurrentBatchConfig from "./ReactCurrentBatchConfig";
 import { ContextItem, setLastContextDep, getLastContextDep } from "./fiberContext";
-
+import { REACT_CONTEXT_TYPE } from "shared/ReactSymbols";
+import { trackUsedThenable } from "./thenable";
 
 let renderLane: Lane = NoLane;
 let currentlyRenderingFiber: FiberNode | null = null;
@@ -80,14 +81,16 @@ const HooksDispatcherOnMount: Dispatcher = {
     useEffect: mountEffect,
     useTransition: mountTransition,
     useRef: mountRef,
-    useContext: readContext
+    useContext: readContext,
+    use: use
 }
 const HooksDispatcherUpdate: Dispatcher = {
     useState: updateState,
     useEffect: updateEffect,
     useTransition: updateTransition,
     useRef: updateRef,
-    useContext: readContext
+    useContext: readContext,
+    use: use
 }
 
 function mountEffect(create: EffectCallback | void, deps: EffectDeps | void) {
@@ -424,4 +427,19 @@ function readContext<T>(context: ReactContext<T>): T {
     }
 
     return value;
+}
+
+function use<T>(usable: Usable<T>): T{
+    if(usable !== null && typeof usable === 'object'){
+        if(typeof (usable as Thenable<T>).then === 'function'){
+            //thenable
+            const thenable = usable as Thenable<T>;
+            return trackUsedThenable(thenable);
+        }else if((usable as ReactContext<T>).$$typeof === REACT_CONTEXT_TYPE){
+            //context
+            const context = usable as ReactContext<T>;
+            return readContext(context);
+        }
+    }
+    throw new Error('不支持use的参数' + usable);
 }
