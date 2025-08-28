@@ -1,9 +1,12 @@
 const supportSymbol = typeof Symbol === 'function' && Symbol.for;//判断宿主环境是否支持Symbol
 export const REACT_ELEMENT_TYPE = supportSymbol 
     ? Symbol.for('react.element') 
-    : 0xeac7;//react元素类型
+    : 0xeac7;
 
-export const REACT_FRAGMENT_TYPE = supportSymbol
-    ? Symbol.for('react.fragment')
-    : 0xeacb;//react片段类型
+export const REACT_CONTEXT_TYPE = supportSymbol
+    ? Symbol.for('react.context')
+    : 0xeacc;
 
+export const REACT_PROVIDERTYPE = supportSymbol
+    ? Symbol.for('react.provider')
+    : 0xeac2;

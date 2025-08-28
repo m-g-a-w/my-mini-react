@@ -14,3 +14,14 @@ export interface ReactElement {
     __mark?: string; // 可选的标记字段
 };
 export type Action<State> = State | ((prevState: State) => State); // 更新动作
+
+
+export type ReactContext<T> = {
+    $$typeof: Symbol | number;
+    Provider: ReactProviderType<T> | null;
+    _currentValue: T;
+}
+export type ReactProviderType<T> = {
+    $$typeof: Symbol | number;
+    _context: ReactContext<T> | null;
+}
