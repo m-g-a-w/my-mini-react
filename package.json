@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build:dev": "rimraf dist && rollup --bundleConfigAsCjs --config scripts/rollup/dev.config.js",
-    "demo": "vite serve demos/test-useRef --config scripts/vite/vite.config.js --force",
+    "demo:useTransition": "vite serve demos/test-useTransition --config scripts/vite/vite.config.js --force",
+    "demo:useRef": "vite serve demos/test-useRef --config scripts/vite/vite.config.js --force",
     "test": "jest --config scripts/jest/jest.config.js"
   },
   "keywords": [],

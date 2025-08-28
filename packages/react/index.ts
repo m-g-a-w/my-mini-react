@@ -15,6 +15,13 @@ export const currentDispatcher: { current: Dispatcher | null } = {
 
 // 创建本地的 resolveDispatcher 函数
 function resolveDispatcher(): Dispatcher {
+    // 优先从全局对象获取 dispatcher
+    const globalDispatcher = (globalThis as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED?.currentDispatcher?.current;
+    if (globalDispatcher) {
+        return globalDispatcher;
+    }
+    
+    // 回退到本地 dispatcher
     const dispatcher = currentDispatcher.current;
     if (dispatcher === null) {
         throw new Error('Hooks can only be called inside the body of a function component.');

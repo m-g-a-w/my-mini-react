@@ -5,8 +5,7 @@ import { Action } from "../../shared/ReactTypes";
 import { getScheduler } from "./scheduler";
 import { requestUpdateLane, Lane, NoLane } from "./fiberLanes";
 import { Update } from "./updateQueue";
-import { currentDispatcher } from 'react';
-import { Dispatcher, Dispatch } from "./currentDispatcher";
+import { Dispatcher, Dispatch, resolveDispatcher } from "./currentDispatcher";
 import ReactCurrentBatchConfig from "./ReactCurrentBatchConfig";
 
 let renderLane: Lane = NoLane;
@@ -55,7 +54,9 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
     }
     
     // 设置 dispatcher
-    currentDispatcher.current = dispatcher;
+    (globalThis as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
+        currentDispatcher: { current: dispatcher }
+    };
 
     const Component = wip.type; // 获取组件类型
     const props = wip.pendingProps; // 获取待处理的属性
@@ -293,18 +294,42 @@ function updateRef<T>(initialValue: T): {current: T} {
     return hook.memoizedState
 }
 function mountTransition(): [boolean, (callback: () => void) => void] {
-    const [isPending, setPending] = mountState(false);
     const hook = mountWorkInProgressHook();
-    const start = startTransition.bind(null, setPending);
-    hook.memoizedState = start;
+    const isPending = false;
+    
+    // 设置hook的状态
+    hook.memoizedState = isPending;
+    
+    // 创建setPending函数
+    const setPending = (action: Action<boolean>) => {
+        if (typeof action === 'function') {
+            hook.memoizedState = action(hook.memoizedState);
+        } else {
+            hook.memoizedState = action;
+        }
+    };
+    
+    const start = (callback: () => void) => startTransition(setPending, callback);
+    
     return [isPending, start];
 }
 
 function updateTransition(): [boolean, (callback: () => void) => void] {
-    const [isPending] = updateState();
     const hook = updateWorkInProgressHook();
-    const start = hook.memoizedState;
-    return [isPending as boolean, start];
+    const isPending = hook.memoizedState;
+    
+    // 创建setPending函数
+    const setPending = (action: Action<boolean>) => {
+        if (typeof action === 'function') {
+            hook.memoizedState = action(hook.memoizedState);
+        } else {
+            hook.memoizedState = action;
+        }
+    };
+    
+    const start = (callback: () => void) => startTransition(setPending, callback);
+    
+    return [isPending, start];
 }
 
 
@@ -313,10 +338,16 @@ function startTransition(setPending: Dispatch<boolean>, callback: () => void) {
     const prevTransition = ReactCurrentBatchConfig.transition;
     ReactCurrentBatchConfig.transition = 1;
 
-    callback();
-    setPending(false);
-
-    ReactCurrentBatchConfig.transition = prevTransition;
+    try {
+        callback();
+    } finally {
+        // 使用 setTimeout 来延迟设置 pending 为 false
+        // 这样可以确保 transition 完成后再更新状态
+        setTimeout(() => {
+            setPending(false);
+        }, 0);
+        ReactCurrentBatchConfig.transition = prevTransition;
+    }
 }
 
 function dispatchSetState<State>(

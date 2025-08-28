@@ -158,7 +158,6 @@ export default function TabContainer() {
           zIndex: 1000,
           animation: 'fadeInOut 2s infinite'
         }}>
-          ⚡ 正在使用 startTransition 处理...
         </div>
       )}
 
