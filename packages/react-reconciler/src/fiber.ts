@@ -1,16 +1,21 @@
 import { Props, Key, Ref, ReactElement } from '../../shared/ReactTypes';
-import { WorkTag, FunctionComponent, HostComponent, Fragment, ContextProvider } from './workTags';
+import { WorkTag, FunctionComponent, HostComponent, Fragment, ContextProvider,SuspenseComponent, OffscreenComponent } from './workTags';
 import { Flags, NoFlags } from './fiberFlags';
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
 import { Effect } from './fiberHooks';
 import { Container } from 'hostConfig';
 import type { CallbackNode } from 'scheduler';
 import { ContextItem } from './fiberContext';
-import { REACT_PROVIDER_TYPE } from '../../shared/ReactSymbols';
+import { REACT_PROVIDER_TYPE, REACT_SUSPENSE_TYPE } from '../../shared/ReactSymbols';
 
 interface FiberDependencies<Value> {
     firstContext: ContextItem<Value> | null;
     lanes: Lanes;
+}
+
+export interface OffscreenProps {
+    mode: 'hidden' | 'visible';
+    children: any;
 }
 
 export class FiberNode {
@@ -136,7 +141,10 @@ export const createFiberFromElement = (element: ReactElement): FiberNode => {
         fiberTag = FunctionComponent; // 如果类型是函数，设置为FunctionComponent
     } else if (type && typeof type === 'object' && type.$$typeof === REACT_PROVIDER_TYPE) {
         fiberTag = ContextProvider; // 如果是 Context.Provider，设置为 ContextProvider
-    } else {
+    } else if (type === REACT_SUSPENSE_TYPE) {
+        fiberTag = SuspenseComponent; // 如果是 Context.Provider，设置为 ContextProvider
+    }
+    else {
         if (__DEV__) {
             console.warn('createFiberFromElement未实现的类型:', type);
         }
@@ -151,6 +159,9 @@ export const createFiberFromElement = (element: ReactElement): FiberNode => {
 
 export const createFiberFromFragment = (elements: any[], key: Key): FiberNode => {
     const fiber = new FiberNode(Fragment, elements, key);
-    // fiber.type = Fragment;
+    return fiber;
+}
+export const createFiberFromOffscreen = (pendingProps: OffscreenProps): FiberNode => {
+    const fiber = new FiberNode(OffscreenComponent,pendingProps,null);
     return fiber;
 }

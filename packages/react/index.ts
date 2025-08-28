@@ -3,6 +3,11 @@ import { createContext } from './src/context';
 import { ReactContext } from 'shared/ReactTypes';
 export type { ReactContext };
 
+
+export {
+     REACT_SUSPENSE_TYPE as Suspense,
+     REACT_FRAGMENT_TYPE as Fragment
+} from 'shared/ReactSymbols';
 // 定义 Dispatcher 接口
 export interface Dispatcher {
     useState: <T>(initialState: T | (() => T)) => [T, (action: T | ((prev: T) => T)) => void];
