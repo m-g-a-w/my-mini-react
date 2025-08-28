@@ -1,9 +1,9 @@
 import { FiberNode } from './fiber';
 import { HostComponent,Fragment,HostRoot, HostText,FunctionComponent } from './workTags';
 import { createInstance,appendInitialChild, Container, createTextInstance, Instance } from 'hostConfig';
-import { NoFlags,Update,Ref } from './fiberFlags';
+import { NoFlags,Update,Ref,Visibility } from './fiberFlags';
 import { popProvider } from './fiberContext';
-import { ContextProvider } from './workTags';
+import { ContextProvider,SuspenseComponent } from './workTags';
 
 function markUpdate(wip: FiberNode){
     wip.flags |= Update;
@@ -63,6 +63,23 @@ export const completeWork = (wip: FiberNode) => {
         case ContextProvider:
             const context = wip.type._context;
             popProvider(context)
+            bubbleProperties(wip);
+            return null;
+        case SuspenseComponent:
+            const offscreenFiber = wip.child as FiberNode;
+            const isHidden = offscreenFiber.pendingProps.mode === 'hidden';
+            const currentOffscreenFiber = offscreenFiber.alternate;
+
+            if(currentOffscreenFiber !== null){
+                const wasHidden = currentOffscreenFiber.pendingProps.mode === 'hidden';
+                if(isHidden !== wasHidden){
+                    offscreenFiber.flags |= Visibility;
+                    bubbleProperties(offscreenFiber);
+                }
+            }else if(isHidden){
+                offscreenFiber.flags |= Visibility;
+                bubbleProperties(offscreenFiber);
+            }
             bubbleProperties(wip);
             return null;
         default:

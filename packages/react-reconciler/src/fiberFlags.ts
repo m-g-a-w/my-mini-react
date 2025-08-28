@@ -9,9 +9,10 @@ export const ChildDeletion = 0b00000100; // 子节点删除标记
 export const PassiveEffect = 0b0001000;
 export const HookHasEffect = 0b0010000;
 export const Ref = 0b0100000;
+export const Visibility = 0b1000000;
 
 export const MutationMask =
-	Placement | Update | ChildDeletion | Ref
+	Placement | Update | ChildDeletion | Ref | Visibility
 export const LayoutMask = Ref;
 export const PassiveMask = PassiveEffect | ChildDeletion;
 
