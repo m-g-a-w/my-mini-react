@@ -1,5 +1,5 @@
 import { ReactContext } from "shared/ReactTypes";
-import { REACT_CONTEXT_TYPE, REACT_PROVIDERTYPE } from "shared/ReactSymbols";
+import { REACT_CONTEXT_TYPE, REACT_PROVIDER_TYPE } from "shared/ReactSymbols";
 
 export function createContext<T>(defaultValue: T): ReactContext<T> {
     const context: ReactContext<T> = {
@@ -8,7 +8,7 @@ export function createContext<T>(defaultValue: T): ReactContext<T> {
         _currentValue: defaultValue,
     };
     context.Provider = {
-        $$typeof: REACT_PROVIDERTYPE,
+        $$typeof: REACT_PROVIDER_TYPE,
         _context: context,
     };
     return context;

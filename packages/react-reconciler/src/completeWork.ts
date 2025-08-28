@@ -2,6 +2,8 @@ import { FiberNode } from './fiber';
 import { HostComponent,Fragment,HostRoot, HostText,FunctionComponent } from './workTags';
 import { createInstance,appendInitialChild, Container, createTextInstance, Instance } from 'hostConfig';
 import { NoFlags,Update,Ref } from './fiberFlags';
+import { popProvider } from './fiberContext';
+import { ContextProvider } from './workTags';
 
 function markUpdate(wip: FiberNode){
     wip.flags |= Update;
@@ -58,6 +60,11 @@ export const completeWork = (wip: FiberNode) => {
         case Fragment:
             bubbleProperties(wip);
             return null; 
+        case ContextProvider:
+            const context = wip.type._context;
+            popProvider(context)
+            bubbleProperties(wip);
+            return null;
         default:
             if(__DEV__) {
                 console.warn('未处理的workTag类型', wip.tag);

@@ -1,10 +1,17 @@
 import { Props, Key, Ref, ReactElement } from '../../shared/ReactTypes';
-import { WorkTag, FunctionComponent, HostComponent, Fragment } from './workTags';
+import { WorkTag, FunctionComponent, HostComponent, Fragment, ContextProvider } from './workTags';
 import { Flags, NoFlags } from './fiberFlags';
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
 import { Effect } from './fiberHooks';
 import { Container } from 'hostConfig';
 import type { CallbackNode } from 'scheduler';
+import { ContextItem } from './fiberContext';
+import { REACT_PROVIDER_TYPE } from '../../shared/ReactSymbols';
+
+interface FiberDependencies<Value> {
+    firstContext: ContextItem<Value> | null;
+    lanes: Lanes;
+}
 
 export class FiberNode {
     tag: WorkTag; // Fiber的类型
@@ -25,7 +32,11 @@ export class FiberNode {
     flags: Flags; // 用于标记Fiber的状态，如更新、删除等
     subtreeFlags: Flags; // 子树的标记，用于标记子节点的状态
     updateQueue: any; // 更新队列，用于存储待处理的更新
-    deletions: FiberNode[] | null
+    deletions: FiberNode[] | null;
+    
+    lanes: Lanes;
+    childLanes: Lanes;
+    dependencies: FiberDependencies<any> | null;
 
     constructor(tag: WorkTag,pendingProps: Props,key: Key){
         this.tag = tag; // Fiber的类型
@@ -49,7 +60,11 @@ export class FiberNode {
         //副作用
         this.flags = NoFlags; //用于标记Fiber的状态，如更新、删除等
         this.subtreeFlags = NoFlags; // 子树的标记，用于标记子节点的状态
-        this.deletions = null
+        this.deletions = null;
+        
+        this.lanes = NoLanes;
+        this.childLanes = NoLanes;
+        this.dependencies = null;
     }
 }
 export class FiberRootNode{
@@ -119,6 +134,8 @@ export const createFiberFromElement = (element: ReactElement): FiberNode => {
         fiberTag = HostComponent; // 如果类型是字符串，设置为HostComponent 
     } else if (typeof type === 'function') {
         fiberTag = FunctionComponent; // 如果类型是函数，设置为FunctionComponent
+    } else if (type && typeof type === 'object' && type.$$typeof === REACT_PROVIDER_TYPE) {
+        fiberTag = ContextProvider; // 如果是 Context.Provider，设置为 ContextProvider
     } else {
         if (__DEV__) {
             console.warn('createFiberFromElement未实现的类型:', type);

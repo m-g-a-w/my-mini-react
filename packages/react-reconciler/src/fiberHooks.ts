@@ -1,12 +1,14 @@
 import { FiberNode } from "./fiber";
 import { Flags, PassiveEffect, HookHasEffect } from "./fiberFlags";
 import { createUpdate, createUpdateQueue, enqueueUpdate, UpdateQueue, processUpdateQueue } from "./updateQueue";
-import { Action } from "../../shared/ReactTypes";
+import { Action,ReactContext } from "../../shared/ReactTypes";
 import { getScheduler } from "./scheduler";
-import { requestUpdateLane, Lane, NoLane } from "./fiberLanes";
+import { requestUpdateLane, Lane, NoLane, NoLanes } from "./fiberLanes";
 import { Update } from "./updateQueue";
 import { Dispatcher, Dispatch, resolveDispatcher } from "./currentDispatcher";
 import ReactCurrentBatchConfig from "./ReactCurrentBatchConfig";
+import { ContextItem, setLastContextDep, getLastContextDep } from "./fiberContext";
+
 
 let renderLane: Lane = NoLane;
 let currentlyRenderingFiber: FiberNode | null = null;
@@ -77,13 +79,15 @@ const HooksDispatcherOnMount: Dispatcher = {
     useState: mountState,
     useEffect: mountEffect,
     useTransition: mountTransition,
-    useRef: mountRef
+    useRef: mountRef,
+    useContext: readContext
 }
 const HooksDispatcherUpdate: Dispatcher = {
     useState: updateState,
     useEffect: updateEffect,
     useTransition: updateTransition,
-    useRef: updateRef
+    useRef: updateRef,
+    useContext: readContext
 }
 
 function mountEffect(create: EffectCallback | void, deps: EffectDeps | void) {
@@ -391,4 +395,33 @@ export function resetHooksState() {
     renderLane = NoLane;
     // 不要重置 currentDispatcher.current，因为组件可能还在渲染中
     // currentDispatcher.current = null;
+}
+
+function readContext<T>(context: ReactContext<T>): T {
+    const consumer = currentlyRenderingFiber;
+    if(consumer === null){
+        throw new Error('readContext只能在函数组件中执行');
+    }
+    const value = context._currentValue;
+    
+    // 建立 fiber -> context 依赖关系
+    const contextItem: ContextItem<T> = {
+        context,
+        next: null,
+        memoizedState: value
+    };
+
+    const currentLastContextDep = getLastContextDep();
+    if (currentLastContextDep === null) {
+        setLastContextDep(contextItem);
+        consumer.dependencies = {
+            firstContext: contextItem,
+            lanes: NoLanes
+        };
+    } else {
+        currentLastContextDep.next = contextItem;
+        setLastContextDep(contextItem);
+    }
+
+    return value;
 }

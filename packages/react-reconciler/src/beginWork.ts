@@ -1,11 +1,12 @@
 import { FiberNode } from "./fiber";
-import { HostRoot,HostText,HostComponent,FunctionComponent,Fragment } from "./workTags";
+import { HostRoot,HostText,HostComponent,FunctionComponent,Fragment,ContextProvider } from "./workTags";
 import {processUpdateQueue} from "./updateQueue";
 import { ReactElement } from "../../shared/ReactTypes";
 import { reconcileChildFibers, mountChildFibers } from "./childFibers";
 import { renderWithHooks } from "./fiberHooks";
 import { Lane } from "./fiberLanes";
 import { Ref } from "./fiberFlags";
+import { pushProvider } from "./fiberContext";
 
 //递归中的递阶段
 export const beginWork = (wip: FiberNode,renderLane: Lane) => {
@@ -21,6 +22,8 @@ export const beginWork = (wip: FiberNode,renderLane: Lane) => {
             return updateFunctionComponent(wip,renderLane);
         case Fragment:
             return updateFragment(wip);
+        case ContextProvider:
+            return updateContextProvider(wip);
         default:
             if(__DEV__) {
                 console.warn('beginWork未实现的类型');
@@ -48,6 +51,17 @@ function updateHostRoot(wip: FiberNode,renderLane: Lane) {
     reconcileChildren(wip, children); // 递归处理子节点
     return wip.child; // 返回子节点
 }
+function updateContextProvider(wip: FiberNode) {
+    const providerType = wip.type;
+    const context = providerType._context;
+    const newProps = wip.pendingProps;
+    const newValue = newProps.value;
+    pushProvider(context, newValue);
+    const nextChildren = newProps.children;
+    reconcileChildren(wip, nextChildren);
+    return wip.child;
+}
+
 function updateFragment(wip: FiberNode) {
     const nextChildren = wip.pendingProps; // 获取待处理的子节点
     reconcileChildren(wip, nextChildren); // 递归处理子节点

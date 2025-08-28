@@ -1,4 +1,7 @@
 import { createElement as createElementFn } from './src/jsx';
+import { createContext } from './src/context';
+import { ReactContext } from 'shared/ReactTypes';
+export type { ReactContext };
 
 // 定义 Dispatcher 接口
 export interface Dispatcher {
@@ -6,6 +9,7 @@ export interface Dispatcher {
     useEffect: (create: () => (() => void) | void, deps?: any[] | null) => void;
     useTransition: () => [boolean, (callback: () => void) => void];
     useRef: <T>(initialValue: T) => { current: T };
+    useContext: <T>(context: ReactContext<T>) => T;
 }
 
 // 创建全局的 currentDispatcher 实例
@@ -49,6 +53,14 @@ export const useTransition: Dispatcher['useTransition'] = () => {
 	const dispatcher = resolveDispatcher();
 	return dispatcher.useTransition();
 };
+
+export const useContext: Dispatcher['useContext'] = (context) => {
+	const dispatcher = resolveDispatcher() as Dispatcher;
+	return dispatcher.useContext(context);
+};
+
+// 导出 createContext
+export { createContext };
 
 // 内部数据共享层
 export const __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
