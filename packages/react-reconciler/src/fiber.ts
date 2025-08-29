@@ -1,4 +1,4 @@
-import { Props, Key, Ref, ReactElement } from '../../shared/ReactTypes';
+import { Props, Key, Ref, ReactElement, Wakeable } from '../../shared/ReactTypes';
 import { WorkTag, FunctionComponent, HostComponent, Fragment, ContextProvider,SuspenseComponent, OffscreenComponent } from './workTags';
 import { Flags, NoFlags } from './fiberFlags';
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
@@ -7,6 +7,7 @@ import { Container } from 'hostConfig';
 import type { CallbackNode } from 'scheduler';
 import { ContextItem } from './fiberContext';
 import { REACT_PROVIDER_TYPE, REACT_SUSPENSE_TYPE } from '../../shared/ReactSymbols';
+
 
 interface FiberDependencies<Value> {
     firstContext: ContextItem<Value> | null;
@@ -70,6 +71,7 @@ export class FiberNode {
         this.lanes = NoLanes;
         this.childLanes = NoLanes;
         this.dependencies = null;
+
     }
 }
 export class FiberRootNode{
@@ -84,6 +86,8 @@ export class FiberRootNode{
     pendingPassiveEffects: PendingPassiveEffects // 待处理的副作用
     callbackNode: CallbackNode | null; // 回调节点
     callbackPriority: Lane; // 回调节点优先级
+
+    pingCache: WeakMap<Wakeable<any>,Set<Lane>> | null;
     constructor(container: Container, hostRootFiber:FiberNode) {
         this.container = container; // 容器信息
         this.current = hostRootFiber; // 当前的Fiber节点
@@ -100,6 +104,8 @@ export class FiberRootNode{
         }
         this.callbackNode = null; // 回调节点
         this.callbackPriority = NoLane; // 回调节点优先级
+
+        this.pingCache = null;
     }
 }
 export interface PendingPassiveEffects{

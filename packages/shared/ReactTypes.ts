@@ -39,7 +39,7 @@ export interface Wakeable<Result>{
     ): void | Wakeable<Result>
 }
 
-export type ThenableImp<T,Result,Err>{
+export type ThenableImp<T,Result,Err> = {
     then(
         onfulfilled: (value: T) => Result, 
         onrejected: (error: Err) => Result

@@ -5,9 +5,9 @@ import { ReactElement } from "../../shared/ReactTypes";
 import { reconcileChildFibers, mountChildFibers } from "./childFibers";
 import { renderWithHooks } from "./fiberHooks";
 import { Lane } from "./fiberLanes";
-import { ChildDeletion, Placement, Ref } from "./fiberFlags";
+import { ChildDeletion, Placement, Ref, DidCapture, NoFlags, ShouldCapture } from "./fiberFlags";
 import { pushProvider } from "./fiberContext";
-
+import { pushSuspenseHandler } from "./suspenseContext";
 
 //递归中的递阶段
 export const beginWork = (wip: FiberNode, renderLane: Lane) => {
@@ -42,19 +42,21 @@ function updateOffscreenComponent(wip: FiberNode) {
     const nextChildren = nextProps.children;
     reconcileChildren(wip, nextChildren);
     return wip.child;
-
 }
 function updateSuspenseComponent(wip: FiberNode) {
     const current = wip.alternate;
     const nextProps = wip.pendingProps;
 
-    let showFallback = false
-    const didSuspend = true
+    let showFallback = false;
+    const didSuspend = (wip.flags & (ShouldCapture | DidCapture)) !== NoFlags;
     if (didSuspend) {
-        showFallback = true
+        showFallback = true;
+        // 清除标志，避免重复处理
+        wip.flags &= ~(ShouldCapture | DidCapture);
     }
     const nextPrimaryChildren = nextProps.children;
     const nextFallbackChildren = nextProps.fallback;
+    pushSuspenseHandler(wip);
     if (current === null) {
         //mount
         if (showFallback) {
@@ -77,8 +79,7 @@ function updateSuspenseComponent(wip: FiberNode) {
             )
         } else {
             //正常
-            return updateSuspensePrimaryChildren(wip, nextPrimaryChildren)
-
+            return updateSuspensePrimaryChildren(wip, nextPrimaryChildren);
         }
     }
 }
@@ -87,31 +88,32 @@ function updateSuspensePrimaryChildren(
     wip: FiberNode,
     primaryChildren: any
 ) {
-    const current = wip.alternate as FiberNode
-    const currentPrimaryChildFragment = current.child as FiberNode
-    const currentFallbackChildFragment: FiberNode | null = currentPrimaryChildFragment.sibling
+    const current = wip.alternate as FiberNode;
+    const currentPrimaryChildFragment = current.child as FiberNode;
+    const currentFallbackChildFragment: FiberNode | null = currentPrimaryChildFragment.sibling;
     const primaryChildProps: OffscreenProps = {
         mode: 'visible',
         children: primaryChildren,
-    }
+    };
     const primaryChildFragment = createWorkInProgress(
         currentPrimaryChildFragment,
         primaryChildProps
-    )
+    );
     primaryChildFragment.return = wip;
-    primaryChildFragment.sibling = null
+    primaryChildFragment.sibling = null;
     wip.child = primaryChildFragment;
 
     if (currentFallbackChildFragment !== null) {
-        const deletions = wip.deletions
+        const deletions = wip.deletions;
         if (deletions === null) {
-            wip.deletions = [currentFallbackChildFragment]
-            wip.flags |= ChildDeletion
+            wip.deletions = [currentFallbackChildFragment];
+            wip.flags |= ChildDeletion;
         } else {
-            deletions.push(currentFallbackChildFragment)
+            deletions.push(currentFallbackChildFragment);
         }
-        return null
     }
+    
+    // 始终返回 primaryChildFragment，确保 Suspense 有内容渲染
     return primaryChildFragment;
 }
 function updateSuspenseFallbackChildren(
@@ -119,20 +121,20 @@ function updateSuspenseFallbackChildren(
     primaryChildren: any,
     fallbackChildren: any
 ) {
-    const current = wip.alternate as FiberNode
-    const currentPrimaryChildFragment = current.child as FiberNode
-    const currentFallbackChildFragment: FiberNode | null = currentPrimaryChildFragment.sibling
+    const current = wip.alternate as FiberNode;
+    const currentPrimaryChildFragment = current.child as FiberNode;
+    const currentFallbackChildFragment: FiberNode | null = currentPrimaryChildFragment.sibling;
 
     const primaryChildProps: OffscreenProps = {
         mode: 'hidden',
         children: primaryChildren,
-    }
-    const primaryChildFragment = createWorkInProgress(currentPrimaryChildFragment, primaryChildProps)
+    };
+    const primaryChildFragment = createWorkInProgress(currentPrimaryChildFragment, primaryChildProps);
     let fallbackChildFragment;
     if (currentFallbackChildFragment !== null) {
-        fallbackChildFragment = createWorkInProgress(currentFallbackChildFragment, fallbackChildren)
+        fallbackChildFragment = createWorkInProgress(currentFallbackChildFragment, fallbackChildren);
     } else {
-        fallbackChildFragment = createFiberFromFragment(fallbackChildren, null)
+        fallbackChildFragment = createFiberFromFragment(fallbackChildren, null);
         fallbackChildFragment.flags |= Placement;
     }
     fallbackChildFragment.return = wip;
@@ -148,12 +150,11 @@ function mountSuspensePrimaryChildren(
     const primaryChildProps: OffscreenProps = {
         mode: 'visible',
         children: primaryChildren,
-    }
-    const primaryChildFragment = createFiberFromOffscreen(primaryChildProps)
+    };
+    const primaryChildFragment = createFiberFromOffscreen(primaryChildProps);
     wip.child = primaryChildFragment;
     primaryChildFragment.return = wip;
     return primaryChildFragment;
-
 }
 function mountSuspenseFallbackChildren(
     wip: FiberNode,
@@ -163,9 +164,9 @@ function mountSuspenseFallbackChildren(
     const primaryChildProps: OffscreenProps = {
         mode: 'hidden',
         children: primaryChildren,
-    }
-    const primaryChildFragment = createFiberFromOffscreen(primaryChildProps)
-    const fallbackChildFragment = createFiberFromFragment(fallbackChildren, null)
+    };
+    const primaryChildFragment = createFiberFromOffscreen(primaryChildProps);
+    const fallbackChildFragment = createFiberFromFragment(fallbackChildren, null);
 
     fallbackChildFragment.flags |= Placement;
 

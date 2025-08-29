@@ -37,6 +37,12 @@ export interface Effect {
 }
 type EffectCallback = () => (() => void) | void;
 type EffectDeps = any[] | null;
+export function resetHooksOnUnwind(wip: FiberNode) {
+	currentlyRenderingFiber = null;
+	currentHook = null;
+	workInProgressHook = null;
+}
+
 
 export function renderWithHooks(wip: FiberNode, lane: Lane) {
     currentlyRenderingFiber = wip; // 设置当前正在渲染的fiber节点
