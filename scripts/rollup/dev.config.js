@@ -1,8 +1,7 @@
-import reactDomConfig from "./react-dom.config";
-import reactReconcilerConfig from "./react-reconciler.config.js";
-import reactConfig from "./react.config.js";
-import reactNoopRendererConfig from "./react-noop-renderer.config.js";
+import reactDomConfig from './react-dom.config';
+import reactNoopRendererConfig from './react-noop-renderer.config';
+import reactConfig from './react.config';
 
 export default () => {
-    return [...reactDomConfig, ...reactReconcilerConfig, ...reactConfig, ...reactNoopRendererConfig];
-}
+	return [...reactConfig, ...reactDomConfig, ...reactNoopRendererConfig];
+};

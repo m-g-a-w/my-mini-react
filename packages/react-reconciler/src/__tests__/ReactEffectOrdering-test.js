@@ -58,4 +58,4 @@ describe('ReactHooksWithNoopRenderer', () => {
 		});
 		expect(Scheduler).toHaveYielded(['Unmount parent', 'Unmount child']);
 	});
-}); 
+});

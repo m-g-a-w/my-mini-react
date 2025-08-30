@@ -1,177 +1,242 @@
-import { Props, Key, Ref, ReactElement, Wakeable } from '../../shared/ReactTypes';
-import { WorkTag, FunctionComponent, HostComponent, Fragment, ContextProvider,SuspenseComponent, OffscreenComponent } from './workTags';
+import { Props, Key, Ref, ReactElementType, Wakeable } from 'shared/ReactTypes';
+import {
+	ContextProvider,
+	Fragment,
+	FunctionComponent,
+	HostComponent,
+	WorkTag,
+	SuspenseComponent,
+	OffscreenComponent,
+	LazyComponent,
+	MemoComponent
+} from './workTags';
 import { Flags, NoFlags } from './fiberFlags';
+import { Container } from 'hostConfig';
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
 import { Effect } from './fiberHooks';
-import { Container } from 'hostConfig';
-import type { CallbackNode } from 'scheduler';
+import { CallbackNode } from 'scheduler';
+import {
+	REACT_MEMO_TYPE,
+	REACT_PROVIDER_TYPE,
+	REACT_LAZY_TYPE,
+	REACT_SUSPENSE_TYPE
+} from 'shared/ReactSymbols';
 import { ContextItem } from './fiberContext';
-import { REACT_PROVIDER_TYPE, REACT_SUSPENSE_TYPE } from '../../shared/ReactSymbols';
-
 
 interface FiberDependencies<Value> {
-    firstContext: ContextItem<Value> | null;
-    lanes: Lanes;
-}
-
-export interface OffscreenProps {
-    mode: 'hidden' | 'visible';
-    children: any;
+	firstContext: ContextItem<Value> | null;
+	lanes: Lanes;
 }
 
 export class FiberNode {
-    tag: WorkTag; // Fiber的类型
-    key: Key; // 唯一标识符
-    type: any; // 元素类型
-    ref: Ref; // 引用
-    stateNode: any; // 关联的DOM节点或组件实例
+	type: any;
+	tag: WorkTag;
+	pendingProps: Props;
+	key: Key;
+	stateNode: any;
+	ref: Ref | null;
 
-    pendingProps: Props; // 待处理的属性
-    return: FiberNode | null; // 指向父Fiber节点
-    sibling: FiberNode | null; // 指向兄弟Fiber节点
-    child: FiberNode | null; // 指向子Fiber节点
-    index: number; // 在兄弟节点中的索引
-    
-    memoizedProps: Props | null; // 已处理的属性
-    memoizedState: any; // 已处理的状态
-    alternate: FiberNode | null; // 用于在workinProgess与current两棵缓存树中进行切换
-    flags: Flags; // 用于标记Fiber的状态，如更新、删除等
-    subtreeFlags: Flags; // 子树的标记，用于标记子节点的状态
-    updateQueue: any; // 更新队列，用于存储待处理的更新
-    deletions: FiberNode[] | null;
-    
-    lanes: Lanes;
-    childLanes: Lanes;
-    dependencies: FiberDependencies<any> | null;
+	return: FiberNode | null;
+	sibling: FiberNode | null;
+	child: FiberNode | null;
+	index: number;
 
-    constructor(tag: WorkTag,pendingProps: Props,key: Key){
-        this.tag = tag; // Fiber的类型
-        this.key =  key || null; // 唯一标识符  
-        this.type = null; // 元素类型   
-        
-        //树状结构
-        this.return = null; // 指向父Fiber节点
-        this.sibling = null; // 指向兄弟Fiber节点
-        this.child = null; // 指向子Fiber节点
-        this.index = 0; // 在兄弟节点中的索引
-        this.ref = null; // 引用
+	memoizedProps: Props | null;
+	memoizedState: any;
+	alternate: FiberNode | null;
+	flags: Flags;
+	subtreeFlags: Flags;
+	updateQueue: unknown;
+	deletions: FiberNode[] | null;
 
-        //作为工作单元
-        this.pendingProps = pendingProps; // 待处理的属性
-        this.memoizedProps = null; // 已处理的属性
-        this.memoizedState = null; // 已处理的状态
-        this.updateQueue = null; // 更新队列，用于存储待处理的更新
-        
-        this.alternate = null; // 用于在workinProgess与current两棵缓存树中进行切换
-        //副作用
-        this.flags = NoFlags; //用于标记Fiber的状态，如更新、删除等
-        this.subtreeFlags = NoFlags; // 子树的标记，用于标记子节点的状态
-        this.deletions = null;
-        
-        this.lanes = NoLanes;
-        this.childLanes = NoLanes;
-        this.dependencies = null;
+	lanes: Lanes;
+	childLanes: Lanes;
 
-    }
-}
-export class FiberRootNode{
-    container: Container; // 容器信息
-    current: FiberNode; // 当前的Fiber节点
-    pendingLanes: Lanes; // 待处理的更新队列
-    finishedLane: Lane; // 已完成的更新队列
-    finishedLanes: Lanes; // 已完成的更新队列
-    finishedWork: FiberNode | null; // 完成的Fiber节点
-    pingedLanes: Lanes; // 被ping的lanes
-    pendingPassiveEffects: PendingPassiveEffects // 待处理的副作用
-    callbackNode: CallbackNode | null; // 回调节点
-    callbackPriority: Lane; // 回调节点优先级
+	dependencies: FiberDependencies<any> | null;
 
-    pingCache: WeakMap<Wakeable<any>,Set<Lane>> | null;
-    suspendedLanes: Lanes;
-    pingLanes: Lanes;
-    onPing?: (lane: Lane) => void; // 添加ping回调函数
-    constructor(container: Container, hostRootFiber:FiberNode) {
-        this.container = container; // 容器信息
-        this.current = hostRootFiber; // 当前的Fiber节点
-        hostRootFiber.stateNode = this;
-        this.finishedWork = null; // 完成的Fiber节点，初始为null
-        this.pendingLanes = NoLanes; // 待处理的更新队列
-        this.finishedLane = NoLane; // 已完成的更新队列
-        this.finishedLanes = NoLanes; // 已完成的更新队列
-        this.suspendedLanes = NoLanes; // 挂起的lanes
-        this.pingedLanes = NoLanes; // 被ping的lanes
-        this.pendingPassiveEffects = {
-            unmount: [],
-            update: []
-        }
-        this.callbackNode = null; // 回调节点
-        this.callbackPriority = NoLane; // 回调节点优先级
+	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
+		// 实例
+		this.tag = tag;
+		this.key = key || null;
+		// HostComponent <div> div DOM
+		this.stateNode = null;
+		// FunctionComponent () => {}
+		this.type = null;
 
-        this.pingCache = null;
-        this.suspendedLanes = NoLanes;
-        this.pingLanes = NoLanes;
-    }
-}
-export interface PendingPassiveEffects{
-    unmount: Effect[];
-    update: Effect[];
-}
-export const createWorkInProgress = (current: FiberNode, pendingProps: Props): FiberNode => {
-    let wip = current.alternate; // 获取当前Fiber节点的备用节点
-    if (wip === null) {
-        //mount
-        wip = new FiberNode(current.tag, pendingProps, current.key); // 如果备用节点不存在，创建一个新的Fiber节点
-        wip.type = current.type; // 设置备用节点的类型
-        wip.stateNode = current.stateNode; // 关联状态节点
-        wip.alternate = current; // 设置备用节点的alternate指向当前节点
-        current.alternate = wip; // 设置当前节点的alternate指向备用节点
-    }else{
-        //update
-        wip.pendingProps = pendingProps; // 更新备用节点的待处理属性
-        wip.flags = NoFlags; // 重置备用节点的标记
-        wip.subtreeFlags = NoFlags
-        wip.deletions = null
-    }
-    wip.type = current.type; // 确保备用节点的类型与当前节点一致
-    wip.updateQueue = current.updateQueue; // 继承当前节点的更新队列
-    wip.child = current.child; // 继承当前节点的子节点
-    //数据
-    wip.memoizedProps = current.memoizedProps; // 继承当前节点的已处理属性
-    wip.memoizedState = current.memoizedState; // 继承当前
-    wip.ref = current.ref; // 继承当前的ref
-    return wip; // 返回备用节点
-}
-export const createFiberFromElement = (element: ReactElement): FiberNode => {
-    const { type, key, props,ref } = element; // 解构React元素的类型、键和属性
-    let fiberTag: WorkTag;
-    
-    if (typeof type === 'string') {
-        fiberTag = HostComponent; // 如果类型是字符串，设置为HostComponent 
-    } else if (typeof type === 'function') {
-        fiberTag = FunctionComponent; // 如果类型是函数，设置为FunctionComponent
-    } else if (type && typeof type === 'object' && type.$$typeof === REACT_PROVIDER_TYPE) {
-        fiberTag = ContextProvider; // 如果是 Context.Provider，设置为 ContextProvider
-    } else if (type === REACT_SUSPENSE_TYPE) {
-        fiberTag = SuspenseComponent; // 如果是 Context.Provider，设置为 ContextProvider
-    }
-    else {
-        if (__DEV__) {
-            console.warn('createFiberFromElement未实现的类型:', type);
-        }
-        fiberTag = FunctionComponent; // 默认设置为FunctionComponent
-    }
-    
-    const fiber = new FiberNode(fiberTag, props, key); // 创建新的Fiber节点
-    fiber.type = type; // 设置Fiber节点的类型
-    fiber.ref = ref; // 设置Fiber节点的ref
-    return fiber; // 返回创建的Fiber节点
+		// 构成树状结构
+		this.return = null;
+		this.sibling = null;
+		this.child = null;
+		this.index = 0;
+
+		this.ref = null;
+
+		// 作为工作单元
+		this.pendingProps = pendingProps;
+		this.memoizedProps = null;
+		this.memoizedState = null;
+		this.updateQueue = null;
+
+		this.alternate = null;
+		// 副作用
+		this.flags = NoFlags;
+		this.subtreeFlags = NoFlags;
+		this.deletions = null;
+
+		this.lanes = NoLanes;
+		this.childLanes = NoLanes;
+
+		this.dependencies = null;
+	}
 }
 
-export const createFiberFromFragment = (elements: any[], key: Key): FiberNode => {
-    const fiber = new FiberNode(Fragment, elements, key);
-    return fiber;
+export interface PendingPassiveEffects {
+	unmount: Effect[];
+	update: Effect[];
 }
-export const createFiberFromOffscreen = (pendingProps: OffscreenProps): FiberNode => {
-    const fiber = new FiberNode(OffscreenComponent,pendingProps,null);
-    return fiber;
+
+export class FiberRootNode {
+	container: Container;
+	current: FiberNode;
+	finishedWork: FiberNode | null;
+	pendingLanes: Lanes;
+	suspendedLanes: Lanes;
+	pingedLanes: Lanes;
+	finishedLane: Lane;
+	pendingPassiveEffects: PendingPassiveEffects;
+
+	callbackNode: CallbackNode | null;
+	callbackPriority: Lane;
+
+	pingCache: WeakMap<Wakeable<any>, Set<Lane>> | null;
+
+	constructor(container: Container, hostRootFiber: FiberNode) {
+		this.container = container;
+		this.current = hostRootFiber;
+		hostRootFiber.stateNode = this;
+		this.finishedWork = null;
+		this.pendingLanes = NoLanes;
+		this.suspendedLanes = NoLanes;
+		this.pingedLanes = NoLanes;
+		this.finishedLane = NoLane;
+
+		this.callbackNode = null;
+		this.callbackPriority = NoLane;
+
+		this.pendingPassiveEffects = {
+			unmount: [],
+			update: []
+		};
+
+		this.pingCache = null;
+	}
+}
+
+export const createWorkInProgress = (
+	current: FiberNode,
+	pendingProps: Props
+): FiberNode => {
+	let wip = current.alternate;
+	if (wip === null) {
+		// mount
+		wip = new FiberNode(current.tag, pendingProps, current.key);
+		wip.stateNode = current.stateNode;
+
+		wip.alternate = current;
+		current.alternate = wip;
+	} else {
+		// update
+		wip.pendingProps = pendingProps;
+		wip.flags = NoFlags;
+		wip.subtreeFlags = NoFlags;
+		wip.deletions = null;
+	}
+	wip.type = current.type;
+	wip.updateQueue = current.updateQueue;
+	wip.child = current.child;
+	wip.memoizedProps = current.memoizedProps;
+	wip.memoizedState = current.memoizedState;
+	wip.ref = current.ref;
+
+	wip.lanes = current.lanes;
+	wip.childLanes = current.childLanes;
+
+	const currentDeps = current.dependencies;
+	wip.dependencies =
+		currentDeps === null
+			? null
+			: {
+					lanes: currentDeps.lanes,
+					firstContext: currentDeps.firstContext
+			  };
+
+	return wip;
+};
+
+export function createFiberFromElement(element: ReactElementType): FiberNode {
+	const { type, key, props, ref } = element;
+	let fiberTag: WorkTag = FunctionComponent;
+
+	if (__DEV__) {
+		console.log('createFiberFromElement:', {
+			type,
+			typeofType: typeof type,
+			isFunction: typeof type === 'function',
+			key,
+			props
+		});
+	}
+
+	if (typeof type === 'string') {
+		// <div/> type: 'div'
+		fiberTag = HostComponent;
+	} else if (typeof type === 'object' && type !== null) {
+		// 处理特殊对象类型（Provider, Memo, Lazy等）
+		switch (type.$$typeof) {
+			case REACT_PROVIDER_TYPE:
+				fiberTag = ContextProvider;
+				break;
+			case REACT_MEMO_TYPE:
+				fiberTag = MemoComponent;
+				break;
+			case REACT_LAZY_TYPE:
+				fiberTag = LazyComponent;
+				break;
+			default:
+				console.warn('未定义的type类型', element);
+				break;
+		}
+	} else if (type === REACT_SUSPENSE_TYPE) {
+		fiberTag = SuspenseComponent;
+	} else if (typeof type === 'function') {
+		// 函数组件，保持默认的 FunctionComponent
+		fiberTag = FunctionComponent;
+	} else if (__DEV__) {
+		console.warn('未定义的type类型', element);
+	}
+
+	if (__DEV__) {
+		console.log('Final fiberTag:', fiberTag, 'WorkTag.FunctionComponent:', FunctionComponent);
+	}
+	
+	const fiber = new FiberNode(fiberTag, props, key);
+	fiber.type = type;
+	fiber.ref = ref;
+	return fiber;
+}
+
+export function createFiberFromFragment(elements: any[], key: Key): FiberNode {
+	const fiber = new FiberNode(Fragment, elements, key);
+	return fiber;
+}
+
+export interface OffscreenProps {
+	mode: 'visible' | 'hidden';
+	children: any;
+}
+
+export function createFiberFromOffscreen(pendingProps: OffscreenProps) {
+	const fiber = new FiberNode(OffscreenComponent, pendingProps, null);
+	// TODO stateNode
+	return fiber;
 }

@@ -1,5 +1,5 @@
-import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from '../../shared/ReactSymbols';
-import { Key, Props, ReactElementType } from '../../shared/ReactTypes';
+import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from 'shared/ReactSymbols';
+import { Key, Props, ReactElementType } from 'shared/ReactTypes';
 import {
 	createFiberFromElement,
 	createFiberFromFragment,
@@ -109,9 +109,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 	}
 
 	function placeSingleChild(fiber: FiberNode) {
-		// 在首次挂载时，总是需要设置 Placement 标志
-		// 即使 shouldTrackEffects 为 false，也要确保 DOM 元素被插入
-		if (fiber.alternate === null) {
+		if (shouldTrackEffects && fiber.alternate === null) {
 			fiber.flags |= Placement;
 		}
 		return fiber;
@@ -208,8 +206,18 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 		const keyToUse = getElementKeyToUse(element, index);
 		const before = existingChildren.get(keyToUse);
 
-		
-		// 判断当前fiber的类型是ReactElement还是HostText
+		// HostText
+		if (typeof element === 'string' || typeof element === 'number') {
+			if (before) {
+				if (before.tag === HostText) {
+					existingChildren.delete(keyToUse);
+					return useFiber(before, { content: element + '' });
+				}
+			}
+			return new FiberNode(HostText, { content: element + '' }, null);
+		}
+
+		// ReactElement
 		if (typeof element === 'object' && element !== null) {
 			switch (element.$$typeof) {
 				case REACT_ELEMENT_TYPE:
@@ -231,18 +239,6 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 					return createFiberFromElement(element);
 			}
 		}
-		// HostText
-		if (typeof element === 'string' || typeof element === 'number') {
-			if (before) {
-				if (before.tag === HostText) {
-					existingChildren.delete(keyToUse);
-					return useFiber(before, { content: element + '' });
-				}
-			}
-			return new FiberNode(HostText, { content: element + '' }, null);
-		}
-
-		
 
 		if (Array.isArray(element)) {
 			return updateFragment(
@@ -290,6 +286,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 					break;
 			}
 		}
+
 		// HostText
 		if (typeof newChild === 'string' || typeof newChild === 'number') {
 			return placeSingleChild(

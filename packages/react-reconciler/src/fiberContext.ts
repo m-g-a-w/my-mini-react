@@ -7,17 +7,10 @@ import {
 	isSubsetOfLanes,
 	mergeLanes
 } from './fiberLanes';
+import { markWipReceivedUpdate } from './beginWork';
 import { ContextProvider } from './workTags';
 
 let lastContextDep: ContextItem<any> | null = null;
-
-export function setLastContextDep(item: ContextItem<any> | null) {
-    lastContextDep = item;
-}
-
-export function getLastContextDep() {
-    return lastContextDep;
-}
 
 export interface ContextItem<Value> {
 	context: ReactContext<Value>;
@@ -42,19 +35,18 @@ export function popProvider<T>(context: ReactContext<T>) {
 }
 
 export function prepareToReadContext(wip: FiberNode, renderLane: Lane) {
-	setLastContextDep(null);
+	lastContextDep = null;
 
 	const deps = wip.dependencies;
-			if (deps !== null) {
-			const firstContext = deps.firstContext;
-			if (firstContext !== null) {
-				if (includeSomeLanes(deps.lanes, renderLane)) {
-					// TODO: 实现 markWipReceivedUpdate
-					// markWipReceivedUpdate();
-				}
-				deps.firstContext = null;
+	if (deps !== null) {
+		const firstContext = deps.firstContext;
+		if (firstContext !== null) {
+			if (includeSomeLanes(deps.lanes, renderLane)) {
+				markWipReceivedUpdate();
 			}
+			deps.firstContext = null;
 		}
+	}
 }
 
 export function readContext<T>(

@@ -1,43 +1,21 @@
-import { createElement as createElementFn } from './src/jsx';
+import { Dispatcher, resolveDispatcher } from './src/currentDispatcher';
+import currentDispatcher from './src/currentDispatcher';
+import currentBatchConfig from './src/currentBatchConfig';
+import {
+	createElement as createElementFn,
+	isValidElement as isValidElementFn
+} from './src/jsx';
+import { REACT_FRAGMENT_TYPE, REACT_SUSPENSE_TYPE } from 'shared/ReactSymbols';
 import { createContext } from './src/context';
-import { ReactContext,Usable } from 'shared/ReactTypes';
-export type { ReactContext };
-
-// 从 jsx 文件导出 Fragment 和 Suspense
-export { Fragment, Suspense } from './src/jsx';
-
-// 定义 Dispatcher 接口
-export interface Dispatcher {
-    useState: <T>(initialState: T | (() => T)) => [T, (action: T | ((prev: T) => T)) => void];
-    useEffect: (create: () => (() => void) | void, deps?: any[] | null) => void;
-    useTransition: () => [boolean, (callback: () => void) => void];
-    useRef: <T>(initialValue: T) => { current: T };
-    useContext: <T>(context: ReactContext<T>) => T;
-    use: <T>(usable: Usable<T>) => T;
-}
-
-// 创建全局的 currentDispatcher 实例
-export const currentDispatcher: { current: Dispatcher | null } = {
-    current: null
-};
-
-// 创建本地的 resolveDispatcher 函数
-function resolveDispatcher(): Dispatcher {
-    // 优先从全局对象获取 dispatcher
-    const globalDispatcher = (globalThis as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED?.currentDispatcher?.current;
-    if (globalDispatcher) {
-        return globalDispatcher;
-    }
-    
-    // 回退到本地 dispatcher
-    const dispatcher = currentDispatcher.current;
-    if (dispatcher === null) {
-        throw new Error('Hooks can only be called inside the body of a function component.');
-    }
-    return dispatcher;
-}
-
+import { lazy } from './src/lazy';
+import { memo } from './src/memo';
+export { REACT_FRAGMENT_TYPE as Fragment } from 'shared/ReactSymbols';
+export { createContext } from './src/context';
+export { lazy } from './src/lazy';
+export { REACT_SUSPENSE_TYPE as Suspense } from 'shared/ReactSymbols';
+export { memo } from './src/memo';
 // React
+
 export const useState: Dispatcher['useState'] = (initialState) => {
 	const dispatcher = resolveDispatcher();
 	return dispatcher.useState(initialState);
@@ -48,14 +26,14 @@ export const useEffect: Dispatcher['useEffect'] = (create, deps) => {
 	return dispatcher.useEffect(create, deps);
 };
 
-export const useRef: Dispatcher['useRef'] = (initialValue) => {
-	const dispatcher = resolveDispatcher();
-	return dispatcher.useRef(initialValue);
-};
-
 export const useTransition: Dispatcher['useTransition'] = () => {
 	const dispatcher = resolveDispatcher();
 	return dispatcher.useTransition();
+};
+
+export const useRef: Dispatcher['useRef'] = (initialValue) => {
+	const dispatcher = resolveDispatcher() as Dispatcher;
+	return dispatcher.useRef(initialValue);
 };
 
 export const useContext: Dispatcher['useContext'] = (context) => {
@@ -63,20 +41,52 @@ export const useContext: Dispatcher['useContext'] = (context) => {
 	return dispatcher.useContext(context);
 };
 
-export const use: Dispatcher['use'] = <T>(usable: Usable<T>) => {
+export const use: Dispatcher['use'] = (usable) => {
 	const dispatcher = resolveDispatcher() as Dispatcher;
 	return dispatcher.use(usable);
 };
 
-// 导出 createContext
-export { createContext };
+export const useMemo: Dispatcher['useMemo'] = (nextCreate, deps) => {
+	const dispatcher = resolveDispatcher() as Dispatcher;
+	return dispatcher.useMemo(nextCreate, deps);
+};
+
+export const useCallback: Dispatcher['useCallback'] = (callback, deps) => {
+	const dispatcher = resolveDispatcher() as Dispatcher;
+	return dispatcher.useCallback(callback, deps);
+};
 
 // 内部数据共享层
 export const __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
-	currentDispatcher
+	currentDispatcher,
+	currentBatchConfig
 };
 
 export const version = '0.0.0';
 
 // TODO 根据环境区分使用jsx/jsxDEV
 export const createElement = createElementFn;
+export const isValidElement = isValidElementFn;
+
+// 默认导出，包含所有 JSX 相关功能
+const React = {
+	createElement: createElementFn,
+	isValidElement: isValidElementFn,
+	Fragment: REACT_FRAGMENT_TYPE,
+	Suspense: REACT_SUSPENSE_TYPE,
+	createContext,
+	lazy,
+	memo,
+	useState,
+	useEffect,
+	useTransition,
+	useRef,
+	useContext,
+	use,
+	useMemo,
+	useCallback,
+	version,
+	__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
+};
+
+export default React;

@@ -1,4 +1,9 @@
-import * as ReactDOM from './src/root';
+import { createRoot, render } from './src/root';
+
+const ReactDOM = {
+	createRoot,
+	render
+};
 
 export default ReactDOM;
-export { createRoot } from './src/root';
+export { createRoot, render };

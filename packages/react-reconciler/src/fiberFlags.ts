@@ -5,12 +5,11 @@ export const Placement = 0b0000001;
 export const Update = 0b0000010;
 export const ChildDeletion = 0b0000100;
 
-export const Passive = 0b0010;
-export const HookHasEffect = 0b0001;
 export const PassiveEffect = 0b0001000;
 export const Ref = 0b0010000;
 
 export const Visibility = 0b0100000;
+
 // 捕获到 something
 export const DidCapture = 0b1000000;
 

@@ -1,26 +1,26 @@
-let syncTaskQueue: ((...args: any) => void)[] | null = null;
-let isFlushingSyncTaskQueue = false;
+let syncQueue: ((...args: any) => void)[] | null = null;
+let isFlushingSyncQueue = false;
 
-export function scheduleSyncCallback(callback: (...args: any) => void){
-    if(syncTaskQueue === null){
-        syncTaskQueue = [callback];
-    }else{
-        syncTaskQueue.push(callback);
-    }
+export function scheduleSyncCallback(callback: (...args: any) => void) {
+	if (syncQueue === null) {
+		syncQueue = [callback];
+	} else {
+		syncQueue.push(callback);
+	}
 }
 
-export function flushSyncTaskQueue(){
-    if(!isFlushingSyncTaskQueue && syncTaskQueue){
-        isFlushingSyncTaskQueue = true;
-        try{
-            syncTaskQueue.forEach(callback => callback());
-        }catch(error){
-            if(__DEV__){
-                console.error('flushSyncTaskQueue error',error);
-            }
-        }finally{
-            isFlushingSyncTaskQueue = false;
-            syncTaskQueue = null;
-        }
-    }
+export function flushSyncCallbacks() {
+	if (!isFlushingSyncQueue && syncQueue) {
+		isFlushingSyncQueue = true;
+		try {
+			syncQueue.forEach((callback) => callback());
+		} catch (e) {
+			if (__DEV__) {
+				console.error('flushSyncCallbacks报错', e);
+			}
+		} finally {
+			isFlushingSyncQueue = false;
+			syncQueue = null;
+		}
+	}
 }

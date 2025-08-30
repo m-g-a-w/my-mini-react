@@ -1,60 +1,52 @@
-import {getPackageJSON,resolvePkgPath,getBaseRollupPlugins} from './utils.js';
+import { getPackageJSON, resolvePkgPath, getBaseRollupPlugins } from './utils';
 import generatePackageJson from 'rollup-plugin-generate-package-json';
-import alias from '@rollup/plugin-alias';
-import path from 'path';
 
-const name = getPackageJSON('react').name;
-//react包的路径
+const { name, module } = getPackageJSON('react');
+// react包的路径
 const pkgPath = resolvePkgPath(name);
-//reactDist包的路径
-const pkgDistPath = resolvePkgPath(name,true);
+// react产物路径
+const pkgDistPath = resolvePkgPath(name, true);
+
 export default [
-  //打包react包
-  {
-    input: `${pkgPath}/index.ts`,
-    output: {
-      file: `${pkgDistPath}/index.js`,
-      name: 'React',
-      format: 'umd', //兼容CJS与EMS格式
-    },
-    plugins: [
-              alias({
-          entries: [
-            { 
-              find: 'react-reconciler', 
-              replacement: '../react-reconciler' 
-            }
-          ]
-        }),
-      ...getBaseRollupPlugins(),
-      generatePackageJson({
-        inputFolder: pkgPath,
-        outputFolder: pkgDistPath,
-        baseContents: ({name,description,version}) => ({
-          name,description,version,
-          main: 'index.js'
-        })
-      })
-    ]
-  },
-  //打包jsx-runtime包
-  {
-    input: `${pkgPath}/src/jsx.ts`,
-    output: 
-    [
-      //jsx-runtime
-      {
-        file: `${pkgDistPath}/jsx-runtime.js`,
-        name: 'jsx-runtime',
-        format: 'umd', //兼容CJS与EMS格式
-      },
-      //jsx-dev-runtime
-      {
-        file: `${pkgDistPath}/jsx-dev-runtime.js`,
-        name: 'jsx-dev-runtime',
-        format: 'umd', //兼容CJS与EMS格式
-      }
-    ],
-    plugins: getBaseRollupPlugins()
-  }
-]
+	// react
+	{
+		input: `${pkgPath}/${module}`,
+		output: {
+			file: `${pkgDistPath}/index.js`,
+			name: 'React',
+			format: 'umd'
+		},
+		plugins: [
+			...getBaseRollupPlugins(),
+			generatePackageJson({
+				inputFolder: pkgPath,
+				outputFolder: pkgDistPath,
+				baseContents: ({ name, description, version }) => ({
+					name,
+					description,
+					version,
+					main: 'index.js'
+				})
+			})
+		]
+	},
+	// jsx-runtime
+	{
+		input: `${pkgPath}/src/jsx.ts`,
+		output: [
+			// jsx-runtime
+			{
+				file: `${pkgDistPath}/jsx-runtime.js`,
+				name: 'jsx-runtime',
+				format: 'umd'
+			},
+			// jsx-dev-runtime
+			{
+				file: `${pkgDistPath}/jsx-dev-runtime.js`,
+				name: 'jsx-dev-runtime',
+				format: 'umd'
+			}
+		],
+		plugins: getBaseRollupPlugins()
+	}
+];

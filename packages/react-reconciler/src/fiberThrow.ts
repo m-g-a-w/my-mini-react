@@ -2,9 +2,8 @@ import { Wakeable } from 'shared/ReactTypes';
 import { FiberNode, FiberRootNode } from './fiber';
 import { ShouldCapture } from './fiberFlags';
 import { Lane, Lanes, SyncLane, markRootPinged } from './fiberLanes';
+import { ensureRootIsScheduled, markRootUpdated } from './workLoop';
 import { getSuspenseHandler } from './suspenseContext';
-import { SuspenseComponent } from './workTags';
-import { SuspenseException, getSuspenseThenable } from './thenable';
 
 function attachPingListener(
 	root: FiberRootNode,
@@ -35,39 +34,27 @@ function attachPingListener(
 			if (pingCache !== null) {
 				pingCache.delete(wakeable);
 			}
-			// 移除对 workLoop 的直接调用，改为通过回调函数
-			if (root.onPing) {
-				root.onPing(lane);
-			}
+			markRootUpdated(root, lane);
+			markRootPinged(root, lane);
+			ensureRootIsScheduled(root);
 		}
 		wakeable.then(ping, ping);
 	}
 }
 
-export function throwException(root: FiberRootNode, value: any, lane: Lane, workInProgress?: FiberNode | null) {
-	// 特殊处理 SuspenseException
-	if (value === SuspenseException) {
-		// 对于 SuspenseException，我们需要找到 Suspense 边界并标记它应该捕获
-		let suspenseBoundary = getSuspenseHandler();
-		
-		if (suspenseBoundary) {
-			suspenseBoundary.flags |= ShouldCapture;
-		}
-		return;
-	}
-
+export function throwException(root: FiberRootNode, value: any, lane: Lane) {
+	// 检查是否是 Thenable（包括 Promise）
 	if (
 		value !== null &&
 		typeof value === 'object' &&
 		typeof value.then === 'function'
 	) {
-		const weakable: Wakeable<any> = value;
+		const wakeable: Wakeable<any> = value;
 
 		const suspenseBoundary = getSuspenseHandler();
-		
 		if (suspenseBoundary) {
 			suspenseBoundary.flags |= ShouldCapture;
 		}
-		attachPingListener(root, weakable, lane);
+		attachPingListener(root, wakeable, lane);
 	}
 }

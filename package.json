@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "build:dev": "rimraf dist && rollup --bundleConfigAsCjs --config scripts/rollup/dev.config.js",
-    "demo:useTransition": "vite serve demos/test-useTransition --config scripts/vite/vite.config.js --force",
-    "demo:useRef": "vite serve demos/test-useRef --config scripts/vite/vite.config.js --force",
-    "demo:useContext": "vite serve demos/test-useContext --config scripts/vite/vite.config.js --force",
-    "demo:suspense-use": "vite serve demos/test-suspense-use --config scripts/vite/vite.config.js --force",
+    "demo:useTransition": "vite serve demos/transition --config scripts/vite/vite.config.js --force",
+    "demo:useRef": "vite serve demos/ref --config scripts/vite/vite.config.js --force",
+    "demo:useContext": "vite serve demos/context --config scripts/vite/vite.config.js --force",
+    "demo:suspense-use": "vite serve demos/suspense-use --config scripts/vite/vite.config.js --force",
     "demo:suspense-lazy": "vite serve demos/suspense-lazy --config scripts/vite/vite.config.js --force",
     "demo:performance": "vite serve demos/performance --config scripts/vite/vite.config.js --force",
     "test": "jest --config scripts/jest/jest.config.js"

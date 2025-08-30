@@ -1,17 +1,27 @@
-import { ReactElement } from "../../shared/ReactTypes";
-import { Container } from "./hostConfig";
-import { createContainer, updateContainer } from "../../react-reconciler/src/fiberReconciler";
-import { initEvent } from "./SyntheticEvent";   
+// ReactDOM.createRoot(root).render(<App/>)
+
+import {
+	createContainer,
+	updateContainer
+} from 'react-reconciler/src/fiberReconciler';
+import { ReactElementType } from 'shared/ReactTypes';
+import { Container } from './hostConfig';
+import { initEvent } from './SyntheticEvent';
 
 export function createRoot(container: Container) {
-    const root = createContainer(container); // 创建根容器
-    return {
-        render(element:ReactElement){
-            // 确保容器存在且是有效的DOM元素
-            if (container && container instanceof Element) {
-                initEvent(container,'click')
-            }
-            updateContainer(element, root); // 更新容器中的内容
-        }
-    };
+	const root = createContainer(container);
+
+	return {
+		render(element: ReactElementType) {
+			initEvent(container, 'click');
+			return updateContainer(element, root);
+		}
+	};
+}
+
+// 为了兼容性，也导出 render 方法
+export function render(element: ReactElementType, container: Container) {
+	const root = createContainer(container);
+	initEvent(container, 'click');
+	return updateContainer(element, root);
 }
