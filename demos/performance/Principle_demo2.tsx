@@ -1,4 +1,4 @@
-import { useState, useContext, createContext, memo } from 'react';
+import { useState, useContext, createContext, memo } from '../../packages/react';
 
 export default function App() {
 	const [num, update] = useState(0);

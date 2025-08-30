@@ -1,5 +1,5 @@
-import { Suspense, lazy } from 'react';
-import ReactDOM from 'react-dom/client';
+import { Suspense, lazy } from '../../packages/react';
+import ReactDOM from '../../packages/react-dom';
 
 function delay(promise) {
 	return new Promise((resolve) => {

@@ -6,4 +6,4 @@ const ReactCurrentBatchConfig: BatchConfig = {
 	transition: null
 };
 
-export default ReactCurrentBatchConfig; 
+export default ReactCurrentBatchConfig;
