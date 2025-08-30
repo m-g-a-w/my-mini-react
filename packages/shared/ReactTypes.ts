@@ -18,12 +18,15 @@ export type Action<State> = State | ((prevState: State) => State); // 更新动�
 
 export type ReactContext<T> = {
     $$typeof: Symbol | number;
-    Provider: ReactProviderType<T> | null;
+    Provider: ReactProviderType<T>;
     _currentValue: T;
 }
 export type ReactProviderType<T> = {
     $$typeof: Symbol | number;
-    _context: ReactContext<T> | null;
+    _context: ReactContext<T>;
+} & {
+    // 添加 JSX 组件所需的属性
+    (props: { value: T; children?: any }): any;
 }
 export type Usable<T> = Thenable<T> | ReactContext<T>;
 

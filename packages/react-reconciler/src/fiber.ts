@@ -81,13 +81,15 @@ export class FiberRootNode{
     finishedLane: Lane; // 已完成的更新队列
     finishedLanes: Lanes; // 已完成的更新队列
     finishedWork: FiberNode | null; // 完成的Fiber节点
-    suspendedLanes: Lanes; // 挂起的lanes
     pingedLanes: Lanes; // 被ping的lanes
     pendingPassiveEffects: PendingPassiveEffects // 待处理的副作用
     callbackNode: CallbackNode | null; // 回调节点
     callbackPriority: Lane; // 回调节点优先级
 
     pingCache: WeakMap<Wakeable<any>,Set<Lane>> | null;
+    suspendedLanes: Lanes;
+    pingLanes: Lanes;
+    onPing?: (lane: Lane) => void; // 添加ping回调函数
     constructor(container: Container, hostRootFiber:FiberNode) {
         this.container = container; // 容器信息
         this.current = hostRootFiber; // 当前的Fiber节点
@@ -106,6 +108,8 @@ export class FiberRootNode{
         this.callbackPriority = NoLane; // 回调节点优先级
 
         this.pingCache = null;
+        this.suspendedLanes = NoLanes;
+        this.pingLanes = NoLanes;
     }
 }
 export interface PendingPassiveEffects{

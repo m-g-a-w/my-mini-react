@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom/client';
+import { useState, useEffect, useRef } from '../../packages/react';
+import ReactDOM from '../../packages/react-dom';
 
 function App() {
 	const [isDel, del] = useState(false);
@@ -19,7 +19,7 @@ function App() {
 }
 
 function Child() {
-	return <p ref={(dom) => console.warn('dom is:', dom)}>Child</p>;
+	return <p ref={(dom: any) => console.warn('dom is:', dom)}>Child</p>;
 }
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

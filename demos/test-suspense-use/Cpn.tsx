@@ -1,28 +1,47 @@
-import { useState, use, useEffect } from 'react';
+import { useState, use, useEffect } from '../../packages/react';
 
-const delay = (t) =>
+const delay = (t: number) =>
 	new Promise((r) => {
 		setTimeout(r, t);
 	});
 
 const cachePool: any[] = [];
 
-function fetchData(id, timeout) {
+function fetchData(id: number, timeout: number) {
 	const cache = cachePool[id];
 	if (cache) {
 		return cache;
 	}
 	return (cachePool[id] = delay(timeout).then(() => {
-		return { data: Math.random().toFixed(2) * 100 };
+		return { data: Math.floor(Math.random() * 100) };
 	}));
 }
 
-export function Cpn({ id, timeout }) {
+// 将 Promise 创建移到组件外部
+const dataPromises: any[] = [];
+
+interface CpnProps {
+	id: number;
+	timeout: number;
+}
+
+interface DataResult {
+	data: number;
+}
+
+export function Cpn({ id, timeout }: CpnProps) {
 	const [num, updateNum] = useState(0);
-	const { data } = use(fetchData(id, timeout));
+	
+	// 确保每个 id 只创建一次 Promise
+	if (!dataPromises[id]) {
+		dataPromises[id] = fetchData(id, timeout);
+	}
+	
+	const { data } = use(dataPromises[id]) as DataResult;
 
 	if (num !== 0 && num % 5 === 0) {
 		cachePool[id] = null;
+		dataPromises[id] = null; // 同时清除 Promise 缓存
 	}
 
 	useEffect(() => {

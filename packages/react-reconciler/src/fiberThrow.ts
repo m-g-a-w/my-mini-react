@@ -2,9 +2,9 @@ import { Wakeable } from 'shared/ReactTypes';
 import { FiberNode, FiberRootNode } from './fiber';
 import { ShouldCapture } from './fiberFlags';
 import { Lane, Lanes, SyncLane, markRootPinged } from './fiberLanes';
-import { ensureRootIsScheduled, markRootUpdated } from './workLoop';
 import { getSuspenseHandler } from './suspenseContext';
 import { SuspenseComponent } from './workTags';
+import { SuspenseException, getSuspenseThenable } from './thenable';
 
 function attachPingListener(
 	root: FiberRootNode,
@@ -35,15 +35,27 @@ function attachPingListener(
 			if (pingCache !== null) {
 				pingCache.delete(wakeable);
 			}
-			markRootUpdated(root, lane);
-			markRootPinged(root, lane);
-			ensureRootIsScheduled(root);
+			// 移除对 workLoop 的直接调用，改为通过回调函数
+			if (root.onPing) {
+				root.onPing(lane);
+			}
 		}
 		wakeable.then(ping, ping);
 	}
 }
 
 export function throwException(root: FiberRootNode, value: any, lane: Lane, workInProgress?: FiberNode | null) {
+	// 特殊处理 SuspenseException
+	if (value === SuspenseException) {
+		// 对于 SuspenseException，我们需要找到 Suspense 边界并标记它应该捕获
+		let suspenseBoundary = getSuspenseHandler();
+		
+		if (suspenseBoundary) {
+			suspenseBoundary.flags |= ShouldCapture;
+		}
+		return;
+	}
+
 	if (
 		value !== null &&
 		typeof value === 'object' &&
@@ -51,26 +63,11 @@ export function throwException(root: FiberRootNode, value: any, lane: Lane, work
 	) {
 		const weakable: Wakeable<any> = value;
 
-		let suspenseBoundary = getSuspenseHandler();
-		
-		// 如果没有找到 Suspense 处理器，主动向上遍历寻找 Suspense 边界
-		if (!suspenseBoundary && workInProgress) {
-			let fiber: FiberNode | null = workInProgress;
-			while (fiber !== null) {
-				if (fiber.tag === SuspenseComponent) {
-					suspenseBoundary = fiber;
-					if (__DEV__) {
-						console.log('找到 Suspense 边界:', fiber);
-					}
-					break;
-				}
-				fiber = fiber.return;
-			}
-		}
+		const suspenseBoundary = getSuspenseHandler();
 		
 		if (suspenseBoundary) {
 			suspenseBoundary.flags |= ShouldCapture;
-		} 
+		}
 		attachPingListener(root, weakable, lane);
 	}
 }

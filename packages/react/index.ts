@@ -3,11 +3,9 @@ import { createContext } from './src/context';
 import { ReactContext,Usable } from 'shared/ReactTypes';
 export type { ReactContext };
 
+// 从 jsx 文件导出 Fragment 和 Suspense
+export { Fragment, Suspense } from './src/jsx';
 
-export {
-     REACT_SUSPENSE_TYPE as Suspense,
-     REACT_FRAGMENT_TYPE as Fragment
-} from 'shared/ReactSymbols';
 // 定义 Dispatcher 接口
 export interface Dispatcher {
     useState: <T>(initialState: T | (() => T)) => [T, (action: T | ((prev: T) => T)) => void];

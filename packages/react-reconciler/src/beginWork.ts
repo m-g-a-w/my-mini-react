@@ -51,8 +51,8 @@ function updateSuspenseComponent(wip: FiberNode) {
     const didSuspend = (wip.flags & (ShouldCapture | DidCapture)) !== NoFlags;
     if (didSuspend) {
         showFallback = true;
-        // 清除标志，避免重复处理
-        wip.flags &= ~(ShouldCapture | DidCapture);
+        // 不要在这里清除标志，让 unwindWork 来处理
+        // wip.flags &= ~(ShouldCapture | DidCapture);
     }
     const nextPrimaryChildren = nextProps.children;
     const nextFallbackChildren = nextProps.fallback;
@@ -188,8 +188,13 @@ function updateHostRoot(wip: FiberNode, renderLane: Lane) {
     const pending = updateQueue.shared.pending; // 获取待处理的更新
     updateQueue.shared.pending = null; // 清空待处理的更新
     const { memoizedState } = processUpdateQueue(baseState, pending, renderLane); // 处理更新队列
-    wip.memoizedState = memoizedState; // 更新已处理状态
+    
+    const current = wip.alternate;
+    if(current !== null){
+        current.memoizedState = memoizedState;
+    }
 
+    wip.memoizedState = memoizedState; // 更新已处理状态
     const nextChildren = wip.memoizedState; // 获取待处理的子节点
     // 确保 nextChildren 不为 null，如果为 null 则使用空数组
     const children = nextChildren !== null ? nextChildren : [];

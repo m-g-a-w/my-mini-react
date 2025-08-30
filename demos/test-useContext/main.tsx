@@ -1,5 +1,5 @@
-import { useState, createContext, useContext } from 'react';
-import ReactDOM from 'react-dom/client';
+import { useState, createContext, useContext } from '../../packages/react';
+import ReactDOM from '../../packages/react-dom';
 
 const ctxA = createContext('deafult A');
 const ctxB = createContext('default B');

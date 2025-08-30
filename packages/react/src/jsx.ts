@@ -1,4 +1,4 @@
-import { REACT_ELEMENT_TYPE,REACT_FRAGMENT_TYPE } from '../../shared/ReactSymbols';
+import { REACT_ELEMENT_TYPE,REACT_FRAGMENT_TYPE, REACT_SUSPENSE_TYPE } from '../../shared/ReactSymbols';
 import type{ Type,Key, Ref,Props,ReactElement,ElementType } from '../../shared/ReactTypes';
 
 const ReactElement = function(type: Type,key: Key,ref: Ref,props: Props): ReactElement{
@@ -80,6 +80,9 @@ export const jsxDEV = (type: ElementType,config: any,...maybeChildren: any): Rea
 }
 
 export const Fragment = REACT_FRAGMENT_TYPE
+
+// Suspense 应该是一个组件类型，用于 JSX
+export const Suspense = REACT_SUSPENSE_TYPE as any;
 
 // Vite 需要 jsxs 导出
 export const jsxs = jsx;

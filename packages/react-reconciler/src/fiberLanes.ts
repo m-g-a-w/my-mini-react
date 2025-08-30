@@ -41,10 +41,7 @@ export function markRootFinished(root: FiberRootNode, lane: Lane) {
 }
 
 export function markRootPinged(root: FiberRootNode, pingedLane: Lane) {
-    // 将 pinged 的 lane 添加到 pingedLanes
-    root.pingedLanes |= pingedLane;
-    // 从 suspendedLanes 中移除，因为已经不再挂起
-    root.suspendedLanes &= ~pingedLane;
+    root.pingedLanes |= root.suspendedLanes & pingedLane
 }
 
 export function markRootSuspended(root: FiberRootNode, suspendedLane: Lane) {
@@ -61,9 +58,9 @@ export function getNextLane(root: FiberRootNode): Lane {
     let nextLane = NoLane;
 
     // 优先处理非挂起的 lanes
-    const nonSuspendedLanes = pendingLanes & ~root.suspendedLanes;
-    if (nonSuspendedLanes !== NoLanes) {
-        nextLane = getHighestPriorityLane(nonSuspendedLanes);
+    const suspendedLanes = pendingLanes & ~root.suspendedLanes;
+    if (suspendedLanes !== NoLanes) {
+        nextLane = getHighestPriorityLane(suspendedLanes);
     } else {
         // 如果没有非挂起的 lanes，检查是否有 pinged 的 lanes
         const pingedLanes = pendingLanes & root.pingedLanes;
