@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import ReactDOM from 'react-dom/client';
+import { useState } from '../../packages/react';
+import ReactDOM from '../../packages/react-dom';
 
 // import App from './Simple';
 import App from './Context';
