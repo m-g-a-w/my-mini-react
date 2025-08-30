@@ -1,4 +1,4 @@
-import { ReactElement } from "../../shared/ReactTypes";
+import { ReactElementType } from "../../shared/ReactTypes";
 import { Container,Instance } from "./hostConfig";
 import { createContainer, updateContainer } from "../../react-reconciler/src/fiberReconciler"; 
 import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from "../../shared/ReactSymbols";
@@ -22,6 +22,16 @@ export function createRoot() {
     function getChildrenAsJSX(root: Container){
         const children = childToJSX(getChildren(root))
         if(Array.isArray(children)){
+            if(children.length === 0){
+                return null;
+            }
+            if(children.length === 1){
+                return children[0];
+            }
+            // If all children are strings/numbers, join them
+            if(children.every(child => typeof child === 'string' || typeof child === 'number')){
+                return children.join('');
+            }
             return {
                 $$typeof: REACT_ELEMENT_TYPE,
                 type: REACT_FRAGMENT_TYPE,
@@ -77,7 +87,7 @@ export function createRoot() {
 
     return {
         _Scheduler: Scheduler,
-        render(element:ReactElement){
+        render(element:ReactElementType){
             updateContainer(element, root); // 更新容器中的内容
         },
         getChildren(){

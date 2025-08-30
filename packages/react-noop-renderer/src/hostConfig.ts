@@ -118,6 +118,23 @@ export function insertChildToContainer(
     container.children.splice(beforeIndex, 0, child);
 }
 
+// Visibility-related functions for noop renderer
+export function hideInstance(instance: Instance) {
+    // No-op for noop renderer
+}
+
+export function hideTextInstance(textInstance: TextInstance) {
+    // No-op for noop renderer
+}
+
+export function unhideInstance(instance: Instance) {
+    // No-op for noop renderer
+}
+
+export function unhideTextInstance(textInstance: TextInstance, text: string) {
+    // No-op for noop renderer
+}
+
 export const scheduleMicroTask = typeof queueMicrotask === 'function' ?
     queueMicrotask
     : typeof Promise === 'function'

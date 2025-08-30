@@ -13,7 +13,7 @@ import {
 const ReactElement = function (
 	type: Type,
 	key: Key,
-	ref: Ref,
+	ref: Ref | null,
 	props: Props
 ): ReactElementType {
 	const element = {
@@ -24,7 +24,7 @@ const ReactElement = function (
 		props,
 		__mark: 'KaSong'
 	};
-	return element;
+	return element as ReactElementType;
 };
 
 export function isValidElement(object: any) {
@@ -42,7 +42,7 @@ export const createElement = (
 ) => {
 	let key: Key = null;
 	const props: Props = {};
-	let ref: Ref = null;
+	let ref: Ref | null = null;
 
 	for (const prop in config) {
 		const val = config[prop];
@@ -78,7 +78,7 @@ export const Fragment = REACT_FRAGMENT_TYPE;
 export const jsx = (type: ElementType, config: any, maybeKey: any) => {
 	let key: Key = null;
 	const props: Props = {};
-	let ref: Ref = null;
+	let ref: Ref | null = null;
 
 	if (maybeKey !== undefined) {
 		key = '' + maybeKey;

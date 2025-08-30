@@ -1,8 +1,20 @@
-import { Dispatch } from 'react/src/currentDispatcher';
-import { Dispatcher } from 'react/src/currentDispatcher';
 import currentDispatcher from 'react/src/currentDispatcher';
-import internals from 'shared/internals';
+import currentBatchConfig from 'react/src/currentBatchConfig';
 import { Action, ReactContext, Thenable, Usable } from 'shared/ReactTypes';
+
+// 定义本地类型以避免循环依赖
+export type Dispatch<State> = (action: Action<State>) => void;
+
+export interface Dispatcher {
+	useState: <T>(initialState: (() => T) | T) => [T, Dispatch<T>];
+	useEffect: (callback: () => void | void, deps: any[] | null | undefined) => void;
+	useTransition: () => [boolean, (callback: () => void) => void];
+	useRef: <T>(initialValue: T) => { current: T };
+	useContext: <T>(context: ReactContext<T>) => T;
+	use: <T>(usable: Usable<T>) => T;
+	useMemo: <T>(nextCreate: () => T, deps: any[] | null | undefined) => T;
+	useCallback: <T>(callback: T, deps: any[] | null | undefined) => T;
+}
 import { FiberNode } from './fiber';
 import { Flags, PassiveEffect } from './fiberFlags';
 import {
@@ -34,16 +46,9 @@ let workInProgressHook: Hook | null = null;
 let currentHook: Hook | null = null;
 let renderLane: Lane = NoLane;
 
-const { currentBatchConfig } = internals;
+	// 移除 internals 依赖，直接使用 currentDispatcher
 
 function readContext<Value>(context: ReactContext<Value>): Value {
-	if (__DEV__) {
-		console.log('readContext called:', {
-			currentlyRenderingFiber,
-			contextType: context.$$typeof,
-			contextValue: context._currentValue
-		});
-	}
 	const consumer = currentlyRenderingFiber as FiberNode;
 	return readContextOrigin(consumer, context);
 }
@@ -86,17 +91,6 @@ export function renderWithHooks(
 
 	const current = wip.alternate;
 
-	if (__DEV__) {
-		console.log('renderWithHooks:', {
-			wipTag: wip.tag,
-			wipType: wip.type,
-			typeofComponent: typeof Component,
-			isFunctionComponent: typeof Component === 'function',
-			current: current !== null ? 'update' : 'mount',
-			currentlyRenderingFiber: currentlyRenderingFiber
-		});
-	}
-
 	if (current !== null) {
 		// update
 		currentDispatcher.current = HooksDispatcherOnUpdate;
@@ -105,34 +99,12 @@ export function renderWithHooks(
 		currentDispatcher.current = HooksDispatcherOnMount;
 	}
 
-	if (__DEV__) {
-		console.log('Dispatcher set:', {
-			dispatcher: currentDispatcher.current === HooksDispatcherOnMount ? 'Mount' : 'Update',
-			dispatcherObj: currentDispatcher.current,
-			currentlyRenderingFiber: currentlyRenderingFiber
-		});
-	}
-
 	const props = wip.pendingProps;
-	
-	if (__DEV__) {
-		console.log('About to call Component:', {
-			currentlyRenderingFiber: currentlyRenderingFiber,
-			dispatcherCurrent: currentDispatcher.current
-		});
-	}
 	
 	// FC render
 	const children = Component(props);
-	
-	if (__DEV__) {
-		console.log('Component execution completed:', {
-			currentlyRenderingFiber: currentlyRenderingFiber,
-			children: children
-		});
-	}
 
-	// 重置操作
+	// 重置操作 - 注意：不要在这里重置 dispatcher，让它在组件渲染完成后保持
 	currentlyRenderingFiber = null;
 	workInProgressHook = null;
 	currentHook = null;

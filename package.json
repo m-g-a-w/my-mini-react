@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build:dev": "rimraf dist && rollup --bundleConfigAsCjs --config scripts/rollup/dev.config.js",
+    "demo:test-fc": "vite serve demos/test-fc --config scripts/vite/vite.config.js --force",
     "demo:useTransition": "vite serve demos/transition --config scripts/vite/vite.config.js --force",
     "demo:useRef": "vite serve demos/ref --config scripts/vite/vite.config.js --force",
     "demo:useContext": "vite serve demos/context --config scripts/vite/vite.config.js --force",
