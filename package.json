@@ -9,6 +9,8 @@
     "demo:useRef": "vite serve demos/test-useRef --config scripts/vite/vite.config.js --force",
     "demo:useContext": "vite serve demos/test-useContext --config scripts/vite/vite.config.js --force",
     "demo:suspense-use": "vite serve demos/test-suspense-use --config scripts/vite/vite.config.js --force",
+    "demo:suspense-lazy": "vite serve demos/suspense-lazy --config scripts/vite/vite.config.js --force",
+    "demo:performance": "vite serve demos/performance --config scripts/vite/vite.config.js --force",
     "test": "jest --config scripts/jest/jest.config.js"
   },
   "keywords": [],
